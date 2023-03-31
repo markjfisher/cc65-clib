@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include "lseek_extra.h"
+#include <stdio.h>
 
 /*off_t __fastcall__ __ext(int channel) {
 		__AX__ = channel;
