@@ -1,5 +1,8 @@
 BUILD=../build
 
+# Choose scripting language: perl or python
+SCRIPT_LANG ?= python
+
 LD=ld65
 LDOPT=-v -vm
 CC=cc65
@@ -7,6 +10,17 @@ CCOPT=-D BBC_CLIB -g -T -O -Or -r -I libsrc/bbc -I libsrc/runtime
 AS=ca65
 ASOPT=-D BBC_CLIB
 AR=ar65
+
+# Script selection based on SCRIPT_LANG
+ifeq ($(SCRIPT_LANG),perl)
+    CLIB_IMPORTS_SCRIPT = perl clib_imports.pl
+    CLIB_STUBS_SCRIPT = perl clib_stubs.pl
+else ifeq ($(SCRIPT_LANG),python)
+    CLIB_IMPORTS_SCRIPT = python3 clib_imports.py
+    CLIB_STUBS_SCRIPT = python3 clib_stubs.py
+else
+    $(error SCRIPT_LANG must be either 'perl' or 'python')
+endif
 
 RTDIR=libsrc/runtime
 COMDIR=libsrc/common
@@ -48,8 +62,8 @@ clean::
 $(WRK)/clib_rom.o: clib_rom.s $(CLIB_INCS)
 	$(AS) $(ASOPT) -I $(WRK) -o $@ $<
 
-$(CLIB_INCS): $(RTSRCS) clib_imports.pl $(WRK) $(OBJS) $(INFOS) 
-	perl clib_imports.pl $(CLIB_RTIMPORT) $(CLIB_RTJUMPS) $(CLIB_OBJS_LST) $(CLIB_STUBS_LST) $(INFOS)
+$(CLIB_INCS): $(RTSRCS) clib_imports.pl clib_imports.py $(WRK) $(OBJS) $(INFOS) 
+	$(CLIB_IMPORTS_SCRIPT) $(CLIB_RTIMPORT) $(CLIB_RTJUMPS) $(CLIB_OBJS_LST) $(CLIB_STUBS_LST) $(INFOS)
 
 
 $(WRK)/%.info: $(WRK)/%.o
@@ -85,8 +99,8 @@ $(WRK)/%.s: $(BBCDIR)/%.c
 $(WRK)/oslib/%.s: $(BBCDIR)/oslib/%.c
 	$(CC) $(CCOPT) -o $@ $<
 
-$(WRK)/clib_stubs.s: $(BUILD)/clib.map clib_stubs.pl
-	perl clib_stubs.pl $(BUILD)/clib.map $(WRK)/clib_stubs.s
+$(WRK)/clib_stubs.s: $(BUILD)/clib.map clib_stubs.pl clib_stubs.py
+	$(CLIB_STUBS_SCRIPT) $(BUILD)/clib.map $(WRK)/clib_stubs.s
 
 $(BUILD)/clib.rom $(BUILD)/clib.map &: $(WRK)/clib_rom.o $(RTOBJS) clib_rom.cfg
 	-rm $(BUILD)/clib_rom.tmp.lib

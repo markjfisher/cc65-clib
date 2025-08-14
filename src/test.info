@@ -1,0 +1,110 @@
+test.o:
+  Header:
+    Magic:                 0x616E7A55
+    Version:                       17
+    Flags:                     0x0000  ()
+    Options:
+      Offset:                      96
+      Size:                         9
+    Files:
+      Offset:                     105
+      Size:                         7
+    Segments:
+      Offset:                     112
+      Size:                        66
+    Imports:
+      Offset:                     178
+      Size:                         1
+    Exports:
+      Offset:                     179
+      Size:                         1
+    Debug symbols:
+      Offset:                     180
+      Size:                         2
+    Line infos:
+      Offset:                     183
+      Size:                        11
+    String pool:
+      Offset:                     194
+      Size:                        90
+    Assertions:
+      Offset:                     284
+      Size:                         1
+    Scopes:
+      Offset:                     182
+      Size:                         1
+  Options:
+    Count:                          2
+    Index:                          0
+      Type:                      0x02  (OPT_TRANSLATOR)
+      Data: "ca65 V2.19 - Git a8f0e934"
+    Index:                          1
+      Type:                      0x40  (OPT_DATETIME)
+      Data:                1755198564  (Thu Aug 14 20:09:24 2025)
+  Files:
+    Count:                          1
+    Index:                          0
+      Name:                  "test.s"
+      Size:                        10
+      Modification time:   1755198564  (Thu Aug 14 20:09:24 2025)
+  Segments:
+    Count:                          6
+    Index:                          0
+      Name:                    "CODE"
+      Flags:                        0
+      Size:                         1
+      Alignment:                    1
+      Address size:              0x02  (absolute)
+      Fragment count:               1
+    Index:                          1
+      Name:                  "RODATA"
+      Flags:                        0
+      Size:                         0
+      Alignment:                    1
+      Address size:              0x02  (absolute)
+      Fragment count:               0
+    Index:                          2
+      Name:                     "BSS"
+      Flags:                        0
+      Size:                         0
+      Alignment:                    1
+      Address size:              0x02  (absolute)
+      Fragment count:               0
+    Index:                          3
+      Name:                    "DATA"
+      Flags:                        0
+      Size:                         0
+      Alignment:                    1
+      Address size:              0x02  (absolute)
+      Fragment count:               0
+    Index:                          4
+      Name:                "ZEROPAGE"
+      Flags:                        0
+      Size:                         0
+      Alignment:                    1
+      Address size:              0x01  (zeropage)
+      Fragment count:               0
+    Index:                          5
+      Name:                    "NULL"
+      Flags:                        0
+      Size:                         0
+      Alignment:                    1
+      Address size:              0x02  (absolute)
+      Fragment count:               0
+  Imports:
+    Count:                          0
+  Exports:
+    Count:                          0
+  Debug symbols:
+    Count:                          0
+  Line info:
+    Count:                          0
+  Scopes:
+    Count:                          0
+  Segment sizes:
+    CODE:                         1
+    RODATA:                       0
+    BSS:                          0
+    DATA:                         0
+    ZEROPAGE:                     0
+    NULL:                         0
