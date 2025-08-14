@@ -3,9 +3,9 @@
 
 #include "fdtable.h"
 #include <errno.h>
+#include <stdio.h>
 #include <unistd.h>
 #include "lseek_extra.h"
-#include <stdio.h>
 
 /*off_t __fastcall__ __ext(int channel) {
 		__AX__ = channel;
@@ -133,11 +133,11 @@ off_t __fastcall__ lseek(int fd, off_t offset, int whence) {
 	return startpos;
 	
 einval:
-	_errno = EINVAL;
+	__errno = EINVAL;
 	return -1;
 		
 epipe:
-	_errno = ESPIPE;
+	__errno = ESPIPE;
 	return -1;
 		
 

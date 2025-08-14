@@ -8,7 +8,7 @@ LDOPT=-v -vm
 CC=cc65
 CCOPT=-D BBC_CLIB -g -T -O -Or -r -I libsrc/bbc -I libsrc/runtime
 AS=ca65
-ASOPT=-D BBC_CLIB
+ASOPT=-t bbc -D BBC_CLIB
 AR=ar65
 
 # Script selection based on SCRIPT_LANG
@@ -53,10 +53,10 @@ X:=$(shell mkdir -p $(WRK)/oslib)
 all:: $(OBJS) $(BUILD)/clib.rom $(WRK)/clib_stubs.s $(BUILD)/clib.lib | $(WRK) $(WRK)/oslib
 
 clean::
-	rm -r libwrk
-	rm $(BUILD)/clib.rom
-	rm $(BUILD)/clib.lib
-	rm $(BUILD)/clib.map
+	rm -r $(WRK) 2>/dev/null
+	rm $(BUILD)/clib.rom 2>/dev/null
+	rm $(BUILD)/clib.lib 2>/dev/null
+	rm $(BUILD)/clib.map 2>/dev/null
 
 
 $(WRK)/clib_rom.o: clib_rom.s $(CLIB_INCS)
