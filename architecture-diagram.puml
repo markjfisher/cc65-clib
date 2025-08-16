@@ -1,0 +1,161 @@
+@startuml BBC Micro C Library Architecture
+!theme plain
+
+title BBC Micro C Library Architecture - ROM-based cc65 Implementation
+
+package "cc65-clib Project" as clib_project {
+    folder "Source Files" as clib_src {
+        component "cc65-clib/src/libsrc/" as clib_libsrc
+        note right of clib_libsrc
+            📁 bbc/ - BBC-specific functions
+            📁 common/ - Standard C library  
+            📁 runtime/ - Low-level runtime
+        end note
+    }
+    
+    folder "Build Output" as clib_build {
+        artifact "clib.rom" as rom_file
+        note right of rom_file
+            📦 16KB Sideways ROM
+            Contains: strlen, abs, memcpy,
+            math ops, string functions, etc.
+            Located at $8000-$BFFF when active
+        end note
+        
+        artifact "rom_stubs.s" as rom_stubs_generated
+        note right of rom_stubs_generated
+            📝 Generated stub file:
+            _strlen := $999C
+            _abs := $93DE
+            _memcpy := $9A1F
+            etc.
+        end note
+    }
+    
+    clib_libsrc --> clib_build : "Build Process\n(Python scripts)"
+    clib_build --> rom_file
+    clib_build --> rom_stubs_generated
+}
+
+package "cc65 Project" as cc65_project {
+    folder "BBC-CLIB Source" as bbc_clib_src {
+        component "cc65/libsrc/bbc-clib/" as bbc_clib_libsrc
+    }
+    
+    artifact "bbc-clib.lib" as bbc_lib {
+        component "crt0.s" as crt0
+        component "rom_detect.s" as rom_detect  
+        component "rom_stubs.s" as rom_stubs_lib
+        component "rom_error.s" as rom_error
+        component "zerobss.s" as zerobss
+        
+        note right of crt0
+            🚀 Startup Code
+            • ROM detection
+            • C runtime init  
+            • Debug output
+            • STARTUP segment
+        end note
+        
+        note right of rom_detect
+            🔍 ROM Scanner
+            • Scans ROM slots 0-15
+            • Pages in correct ROM
+            • Validates ROM type $82
+        end note
+        
+        note right of rom_stubs_lib
+            🔗 Function Stubs
+            • Jump to ROM addresses
+            • Copied from cc65-clib build
+        end note
+    }
+    
+    bbc_clib_libsrc --> bbc_lib : "cc65 build\n(ar65)"
+    bbc_lib --> crt0
+    bbc_lib --> rom_detect
+    bbc_lib --> rom_stubs_lib  
+    bbc_lib --> rom_error
+    bbc_lib --> zerobss
+}
+
+package "Application Build" as app_build {
+    artifact "Application Source" as app_source
+    note right of app_source
+        📝 simple.s or hello.c
+        Contains: main(), application logic
+        Uses: strlen(), abs(), etc.
+    end note
+    
+    artifact "Application Object" as app_obj
+    note right of app_obj
+        📦 simple.o
+        Compiled but unlinked
+    end note
+    
+    artifact "Final Executable" as app_final
+    note right of app_final
+        💿 SIMPLE
+        Ready to run on BBC Micro
+        Contains: app code + startup + stubs
+    end note
+    
+    app_source --> app_obj : "ca65\n(assemble)"
+    app_obj --> app_final : "cl65\n(link)"
+    bbc_lib --> app_final : "Links with"
+}
+
+package "Runtime Environment" as runtime {
+    component "BBC Micro" as bbc_micro {
+        component "Sideways ROM Slot" as rom_slot
+        component "Application Memory" as app_memory
+        
+        note right of rom_slot
+            🔌 $8000-$BFFF
+            One of 16 possible slots
+            Paged in by ROMSEL ($FE30)
+        end note
+        
+        note right of app_memory
+            📍 $1900+ (typical)
+            Contains application code
+            and linked startup code
+        end note
+    }
+}
+
+' Build Dependencies
+rom_stubs_generated -.-> rom_stubs_lib : "Copied during\ncc65 build"
+rom_file -.-> rom_slot : "Must be installed\nat runtime"
+
+' Runtime Flow
+app_final --> app_memory : "Loaded by\nBBC Micro OS"
+rom_file --> rom_slot : "Installed in\nsideways ROM"
+
+' Execution Flow
+app_memory --> rom_slot : "1. crt0 detects & pages ROM"
+rom_slot --> app_memory : "2. ROM functions accessible"
+app_memory --> rom_slot : "3. Application calls ROM functions"
+
+' Styling
+skinparam component {
+    BackgroundColor lightblue
+    BorderColor black
+}
+
+skinparam artifact {
+    BackgroundColor lightgreen
+    BorderColor black
+}
+
+skinparam package {
+    BackgroundColor lightyellow
+    BorderColor black
+}
+
+skinparam note {
+    BackgroundColor wheat
+    BorderColor brown
+}
+
+@enduml
