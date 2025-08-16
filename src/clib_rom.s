@@ -4,7 +4,7 @@
 
 	.byte 		0,0,0		; language entry
 	jmp clib_svc			; service
-	.byte		$81		; dummy rom type
+	.byte		$82		; rom type: service ROM, 6502 code
 	.byte		<(clib_copyright)
 	.byte		$01		; version
 clib_rom_tite:
