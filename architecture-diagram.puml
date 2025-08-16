@@ -13,6 +13,16 @@ package "cc65-clib Project" as clib_project {
         end note
     }
     
+    folder "Build Process" as clib_process {
+        component "clib_imports.py" as manifest_generator
+        note right of manifest_generator
+            🔍 Analyzes .info files
+            Separates by segment usage:
+            • CODE/RODATA → ROM
+            • BSS/DATA → Local
+        end note
+    }
+    
     folder "Build Output" as clib_build {
         artifact "clib.rom" as rom_file
         note right of rom_file
@@ -30,11 +40,30 @@ package "cc65-clib Project" as clib_project {
             _memcpy := $9A1F
             etc.
         end note
+        
+        artifact "rom_functions.manifest" as rom_manifest
+        note right of rom_manifest
+            📋 508 ROM Functions
+            Pure CODE/RODATA only
+            _strlen, _abs, _memcpy,
+            string functions, math ops, etc.
+        end note
+        
+        artifact "excluded_functions.manifest" as excluded_manifest
+        note right of excluded_manifest
+            📋 223 Local Functions  
+            Need BSS/DATA/state
+            _printf, _malloc, _fopen,
+            zerobss, heap functions, etc.
+        end note
     }
     
-    clib_libsrc --> clib_build : "Build Process\n(Python scripts)"
+    clib_libsrc --> clib_process : "Build with\nmanifest analysis"
+    clib_process --> clib_build
     clib_build --> rom_file
     clib_build --> rom_stubs_generated
+    clib_build --> rom_manifest
+    clib_build --> excluded_manifest
 }
 
 package "cc65 Project" as cc65_project {
@@ -47,13 +76,17 @@ package "cc65 Project" as cc65_project {
         component "rom_detect.s" as rom_detect  
         component "rom_stubs.s" as rom_stubs_lib
         component "rom_error.s" as rom_error
-        component "zerobss.s" as zerobss
+        
+        folder "Local C Runtime" as local_runtime {
+            component "zerobss.s" as zerobss
+            component "Other excluded functions" as other_excluded
+        }
         
         note right of crt0
             🚀 Startup Code
-            • ROM detection
-            • C runtime init  
-            • Debug output
+            • ROM detection & paging
+            • C runtime initialization
+            • Clean exit (invalidate ROM state)
             • STARTUP segment
         end note
         
@@ -62,12 +95,21 @@ package "cc65 Project" as cc65_project {
             • Scans ROM slots 0-15
             • Pages in correct ROM
             • Validates ROM type $82
+            • Stores original ROMSEL
         end note
         
         note right of rom_stubs_lib
-            🔗 Function Stubs
+            🔗 Function Stubs (508 functions)
             • Jump to ROM addresses
             • Copied from cc65-clib build
+            • Based on rom_functions.manifest
+        end note
+        
+        note right of local_runtime
+            🏠 Local Functions (223 functions)
+            • Need BSS/DATA segments
+            • zerobss, heap, printf, malloc
+            • Based on excluded_functions.manifest
         end note
     }
     
@@ -76,7 +118,7 @@ package "cc65 Project" as cc65_project {
     bbc_lib --> rom_detect
     bbc_lib --> rom_stubs_lib  
     bbc_lib --> rom_error
-    bbc_lib --> zerobss
+    bbc_lib --> local_runtime
 }
 
 package "Application Build" as app_build {
@@ -84,7 +126,7 @@ package "Application Build" as app_build {
     note right of app_source
         📝 simple.s or hello.c
         Contains: main(), application logic
-        Uses: strlen(), abs(), etc.
+        Uses: strlen(), abs(), printf(), malloc()
     end note
     
     artifact "Application Object" as app_obj
@@ -97,7 +139,7 @@ package "Application Build" as app_build {
     note right of app_final
         💿 SIMPLE
         Ready to run on BBC Micro
-        Contains: app code + startup + stubs
+        Contains: app code + startup + stubs + local functions
     end note
     
     app_source --> app_obj : "ca65\n(assemble)"
@@ -114,18 +156,21 @@ package "Runtime Environment" as runtime {
             🔌 $8000-$BFFF
             One of 16 possible slots
             Paged in by ROMSEL ($FE30)
+            Contains 508 ROM functions
         end note
         
         note right of app_memory
             📍 $1900+ (typical)
-            Contains application code
-            and linked startup code
+            Contains application code,
+            startup code, and 223 local functions
         end note
     }
 }
 
 ' Build Dependencies
 rom_stubs_generated -.-> rom_stubs_lib : "Copied during\ncc65 build"
+rom_manifest -.-> rom_stubs_lib : "Defines which\nfunctions in ROM"
+excluded_manifest -.-> local_runtime : "Defines which\nfunctions local"
 rom_file -.-> rom_slot : "Must be installed\nat runtime"
 
 ' Runtime Flow
@@ -134,8 +179,9 @@ rom_file --> rom_slot : "Installed in\nsideways ROM"
 
 ' Execution Flow
 app_memory --> rom_slot : "1. crt0 detects & pages ROM"
-rom_slot --> app_memory : "2. ROM functions accessible"
-app_memory --> rom_slot : "3. Application calls ROM functions"
+rom_slot --> app_memory : "2. ROM functions (508) accessible"
+app_memory --> rom_slot : "3. App calls ROM functions via stubs"
+local_runtime --> app_memory : "4. Local functions (223) in app memory"
 
 ' Styling
 skinparam component {
@@ -150,6 +196,11 @@ skinparam artifact {
 
 skinparam package {
     BackgroundColor lightyellow
+    BorderColor black
+}
+
+skinparam folder {
+    BackgroundColor lightcyan
     BorderColor black
 }
 
