@@ -33,3 +33,23 @@ cd src && make SCRIPT_LANG=perl
 
 See `PYTHON_SCRIPTS.md` for detailed documentation of the Python equivalents.
 
+### Integration with cc65 Project
+
+The build system automatically copies generated manifest files to the cc65 project
+to ensure proper ROM/local function splitting. This uses loose coupling via the
+`CC65_SRC` environment variable:
+
+- **Default location**: `../../cc65` (sibling directory)
+- **Custom location**: Set `CC65_SRC` environment variable
+
+```bash
+# Use default cc65 location
+cd src && make
+
+# Use custom cc65 location  
+CC65_SRC=/path/to/your/cc65 make
+```
+
+The build will report if the cc65 directory is not found but will not fail,
+allowing the cc65-clib project to be built independently.
+

@@ -10,19 +10,21 @@
 		.import ldeaxysp
 		.import osfile_alloc_block	
 		.import osfile_store_fn
+		.importzp c_sp
 		.export osfile_write_X_start
 		
 
 		.proc osfile_write_X_start
 
-		jsr	osfile_alloc_block	; room for parameter block
+		jsr	osfile_alloc_block	; Allocates OSFILE block + filename buffer, sets up ptr2
 
-		ldy	#18 + 5			; file_name
+		; Get filename pointer (offset by 18-byte OSFILE block + 128-byte filename buffer) 
+		ldy	#18 + 128 + 5		; file_name
 		jsr	ldaxysp
 		
 		jsr	osfile_store_fn
 		
-		ldy	#18 + 3			; high word of exec_addr
+		ldy	#18 + 128 + 3		; parameter data
 		jsr	ldeaxysp
 		
 		rts

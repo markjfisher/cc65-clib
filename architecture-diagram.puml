@@ -32,8 +32,8 @@ package "cc65-clib Project" as clib_project {
             Located at $8000-$BFFF when active
         end note
         
-        artifact "rom_stubs.s" as rom_stubs_generated
-        note right of rom_stubs_generated
+        artifact "clib_stubs.s" as clib_stubs_generated
+        note right of clib_stubs_generated
             📝 Generated stub file:
             _strlen := $999C
             _abs := $93DE
@@ -61,7 +61,7 @@ package "cc65-clib Project" as clib_project {
     clib_libsrc --> clib_process : "Build with\nmanifest analysis"
     clib_process --> clib_build
     clib_build --> rom_file
-    clib_build --> rom_stubs_generated
+    clib_build --> clib_stubs_generated
     clib_build --> rom_manifest
     clib_build --> excluded_manifest
 }
@@ -74,7 +74,7 @@ package "cc65 Project" as cc65_project {
     artifact "bbc-clib.lib" as bbc_lib {
         component "crt0.s" as crt0
         component "rom_detect.s" as rom_detect  
-        component "rom_stubs.s" as rom_stubs_lib
+        component "clib_stubs.s" as clib_stubs_lib
         component "rom_error.s" as rom_error
         
         folder "Local C Runtime" as local_runtime {
@@ -98,7 +98,7 @@ package "cc65 Project" as cc65_project {
             • Stores original ROMSEL
         end note
         
-        note right of rom_stubs_lib
+        note right of clib_stubs_lib
             🔗 Function Stubs (508 functions)
             • Jump to ROM addresses
             • Copied from cc65-clib build
@@ -116,7 +116,7 @@ package "cc65 Project" as cc65_project {
     bbc_clib_libsrc --> bbc_lib : "cc65 build\n(ar65)"
     bbc_lib --> crt0
     bbc_lib --> rom_detect
-    bbc_lib --> rom_stubs_lib  
+    bbc_lib --> clib_stubs_lib  
     bbc_lib --> rom_error
     bbc_lib --> local_runtime
 }
@@ -168,8 +168,8 @@ package "Runtime Environment" as runtime {
 }
 
 ' Build Dependencies
-rom_stubs_generated -.-> rom_stubs_lib : "Copied during\ncc65 build"
-rom_manifest -.-> rom_stubs_lib : "Defines which\nfunctions in ROM"
+clib_stubs_generated -.-> clib_stubs_lib : "Copied during\ncc65 build"
+rom_manifest -.-> clib_stubs_lib : "Defines which\nfunctions in ROM"
 excluded_manifest -.-> local_runtime : "Defines which\nfunctions local"
 rom_file -.-> rom_slot : "Must be installed\nat runtime"
 

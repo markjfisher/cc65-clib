@@ -24,35 +24,41 @@
 		.import ldeaxysp
 		.import ldaxysp
 		.import addysp
+		.importzp c_sp
 
 		.export _osfile_write
 
 		.proc _osfile_write
 
-		jsr	osfile_alloc_block		; room for parameter block
+		jsr	osfile_alloc_block		; Allocates OSFILE block + filename buffer, sets up ptr2
 
-		ldy	#18 + 13		; file_name
+		; Get filename pointer (offset by 18-byte OSFILE block + 128-byte filename buffer)
+		ldy	#18 + 128 + 13		; file_name
 		jsr	ldaxysp
 		
 		jsr	osfile_store_fn
 		
-		ldy	#18 + 11		; high word of load_addr
+		ldy	#18 + 128 + 11		; high word of load_addr
 		jsr	ldeaxysp
 		
 		jsr	osfile_store_load
 
-		ldy	#18 + 7			; high word of load_addr
+		ldy	#18 + 128 + 7		; high word of exec_addr
 		jsr	ldeaxysp
 		
 		jsr	osfile_store_exec
 
-		ldy	#18 + 3			; high word of load_addr
+		ldy	#18 + 128 + 3		; attr
 		jsr	ldeaxysp
 		
 		jsr	osfile_store_attr
 
 		lda	#OSFile_Write
 		jsr	osfile_callosfile
+
+		; Clean up the 128-byte filename buffer
+		lda	#128
+		jsr	addysp
 
 		ldy	#18 + 14
 		jsr	addysp

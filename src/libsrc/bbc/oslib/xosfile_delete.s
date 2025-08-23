@@ -14,6 +14,7 @@
 		.import _set_brk_ret
 		.import ldaxysp
 		.import addysp
+		.importzp c_sp
 		.export _xosfile_delete
 			
 
@@ -32,9 +33,10 @@
 
 		.proc _xosfile_delete
 
-		jsr	osfile_alloc_block
+		jsr	osfile_alloc_block		; Allocates OSFILE block + filename buffer, sets up ptr2
 		
-		ldy	#18 + 11
+		; Get filename pointer (offset by 18-byte OSFILE block + 128-byte filename buffer)
+		ldy	#18 + 128 + 11
 		jsr	ldaxysp
 		jsr	osfile_store_fn
 
@@ -44,6 +46,10 @@
 		lda	#OSFile_Delete
 		jsr	osfile_callosfile
 
+		; Clean up the 128-byte filename buffer
+		lda	#128
+		jsr	addysp
+
 		ldy	#18 + 12
 		jsr	xosfile_ret_read_delete_load
 		jsr	_clear_brk_ret
@@ -51,7 +57,10 @@
 		tax
 		rts
 
-er:		ldy	#18 + 12
+er:		; Clean up the 128-byte filename buffer on error path too
+		lda	#128
+		jsr	addysp
+		ldy	#18 + 12
 		jsr	addysp
 		lda	$fd
 		ldx	$fe

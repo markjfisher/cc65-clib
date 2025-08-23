@@ -10,7 +10,8 @@
 		.import osfile_store_fn
 		.import	osfile_callosfile
 		.import osfile_ret_read_delete_load
-		.import ldaxysp
+		.import ldaxysp, addysp
+		.importzp c_sp
 		.export _osfile_read
 
 ;extern os_error *xosfile_read (char const *file_name,		2
@@ -27,14 +28,19 @@
 
 		.proc _osfile_read
 		
-		jsr	osfile_alloc_block
+		jsr	osfile_alloc_block		; Allocates OSFILE block + filename buffer, sets up ptr2
 		
-		ldy	#18 + 9
+		; Get filename pointer (offset by 18-byte OSFILE block + 128-byte filename buffer)  
+		ldy	#18 + 128 + 9
 		jsr	ldaxysp
 		jsr	osfile_store_fn
 
 		lda	#OSFile_Read
 		jsr	osfile_callosfile
+
+		; Clean up the 128-byte filename buffer
+		lda	#128
+		jsr	addysp
 
 		ldy	#18 + 10
 		jmp	osfile_ret_read_delete_load

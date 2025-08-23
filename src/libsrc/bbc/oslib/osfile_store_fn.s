@@ -10,32 +10,31 @@
 		.import steaxysp
 		.export osfile_store_fn
 		.importzp ptr1, ptr2
-		.import bbc_string_buf
 
 		.proc osfile_store_fn
-		; copy to buffer and replace 0 terminator with \x0d
+		; Takes filename pointer in A/X and buffer pointer in ptr2
+		; Caller must set up ptr2 to point to a 128-byte buffer
 		
 		sta	ptr1
 		stx	ptr1 + 1
 
-		lda	#<bbc_string_buf
-		sta	ptr2
-		ldx	#>bbc_string_buf
-		stx	ptr2 + 1
-
+		; Copy string and convert null terminator to CR
+		; ptr2 should already point to the buffer
 		ldy	#0
 lp:		lda	(ptr1), y
 		beq	dn
 		sta	(ptr2), y
 		iny
-		bne	lp
+		cpy	#127			; Limit to 127 chars (+ CR = 128 bytes)
+		bcc	lp
 		dey
 dn:		lda	#$d
 		sta	(ptr2), y
 
-		ldy	#0			; store in block
-		lda	#<bbc_string_buf
-		ldx	#>bbc_string_buf
+		; Store buffer address in OSFILE parameter block
+		ldy	#0
+		lda	ptr2
+		ldx	ptr2 + 1
 		jsr	steaxysp
 		rts
 		.endproc

@@ -29,6 +29,10 @@
 		lda	#OSFile_WriteAttr
 		jsr	osfile_callosfile
 
+		; Clean up the 128-byte filename buffer allocated by osfile_write_X_start
+		lda	#128
+		jsr	addysp
+
 		ldy	#18 + 6
 		jsr	addysp
 		rts

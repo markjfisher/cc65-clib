@@ -123,7 +123,7 @@ $(BUILD)/clib.lib: $(WRK)/clib_stubs.o $(CLIB_STUBS_LST)
 
 # Copy manifest files to CC65 project for build integration (loose coupling)
 .PHONY: copy-manifests
-copy-manifests: $(CLIB_INCS)
+copy-manifests: $(CLIB_INCS) $(WRK)/clib_stubs.s
 	@echo "Checking for CC65 project at $(CC65_SRC)..."
 	@if [ -d "$(CC65_SRC)" ]; then \
 		echo "Found CC65 source directory: $(CC65_SRC)"; \
@@ -131,6 +131,7 @@ copy-manifests: $(CLIB_INCS)
 			echo "Copying manifest files to CC65 project..."; \
 			cp $(WRK)/excluded_functions.manifest $(CC65_SRC)/libsrc/bbc-clib/excluded_functions.manifest 2>/dev/null || echo "Warning: Could not copy excluded_functions.manifest"; \
 			cp $(WRK)/rom_functions.manifest $(CC65_SRC)/libsrc/bbc-clib/rom_functions.manifest 2>/dev/null || echo "Warning: Could not copy rom_functions.manifest"; \
+			cp $(WRK)/clib_stubs.s $(CC65_SRC)/libsrc/bbc-clib/clib_stubs.s 2>/dev/null || echo "Warning: Could not copy clib_stubs.s"; \
 			echo "Manifest files updated in CC65 project."; \
 		else \
 			echo "Warning: $(CC65_SRC)/libsrc/bbc-clib directory not found - manifests not copied"; \

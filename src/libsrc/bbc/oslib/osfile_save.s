@@ -32,28 +32,29 @@
 
 		.proc _osfile_save
 
-		jsr	osfile_alloc_block
+		jsr	osfile_alloc_block		; Allocates OSFILE block + filename buffer, sets up ptr2
 
-		ldy	#18 + 13
+		; Get filename pointer (offset by 18-byte OSFILE block + 128-byte filename buffer)
+		ldy	#18 + 128 + 13
 		jsr	ldaxysp
 		jsr	osfile_store_fn
 
-		ldy	#18 + 11
+		ldy	#18 + 128 + 11
 		jsr	ldeaxysp
 		jsr	osfile_store_load
 
-		ldy	#18 + 7
+		ldy	#18 + 128 + 7
 		jsr	ldeaxysp
 		jsr	osfile_store_exec
 
-		ldy	#18 + 3
+		ldy	#18 + 128 + 3
 		jsr	ldaxysp
 		ldy	#0
 		sty	sreg
 		sty	sreg + 1
 		jsr	osfile_store_len; start address in memory
 
-		ldy	#18 + 1
+		ldy	#18 + 128 + 1
 		jsr	ldaxysp
 		ldy	#0
 		sty	sreg
@@ -62,6 +63,10 @@
 
 		lda	#OSFile_Save
 		jsr	osfile_callosfile
+
+		; Clean up the 128-byte filename buffer
+		lda	#128
+		jsr	addysp
 
 		ldy	#18 + 14
 		jsr	addysp
