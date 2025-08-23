@@ -3,6 +3,9 @@ BUILD=../build
 # Choose scripting language: perl or python
 SCRIPT_LANG ?= python
 
+# CC65 source directory for manifest file copying (loose coupling)
+CC65_SRC ?= ../../cc65
+
 LD=ld65
 LDOPT=-v -vm
 CC=cc65
@@ -48,9 +51,9 @@ X:=$(shell mkdir -p $(WRK))
 X:=$(shell mkdir -p $(WRK)/oslib)
 
 
-.PHONY:clean all 
+.PHONY:clean all copy-manifests 
 
-all:: $(OBJS) $(BUILD)/clib.rom $(WRK)/clib_stubs.s $(BUILD)/clib.lib $(BUILD)/clib.lbl $(BUILD)/clib-mos.lbl | $(WRK) $(WRK)/oslib
+all:: $(OBJS) $(BUILD)/clib.rom $(WRK)/clib_stubs.s $(BUILD)/clib.lib $(BUILD)/clib.lbl $(BUILD)/clib-mos.lbl copy-manifests | $(WRK) $(WRK)/oslib
 
 clean::
 	-rm -r $(WRK) 2>/dev/null
@@ -117,3 +120,22 @@ $(BUILD)/clib.lib: $(WRK)/clib_stubs.o $(CLIB_STUBS_LST)
 	-rm $(BUILD)/clib.lib >/dev/null
 	$(AR) a $@ $(WRK)/clib_stubs.o
 	$(AR) a $@ $(shell cat $(CLIB_STUBS_LST))
+
+# Copy manifest files to CC65 project for build integration (loose coupling)
+.PHONY: copy-manifests
+copy-manifests: $(CLIB_INCS)
+	@echo "Checking for CC65 project at $(CC65_SRC)..."
+	@if [ -d "$(CC65_SRC)" ]; then \
+		echo "Found CC65 source directory: $(CC65_SRC)"; \
+		if [ -d "$(CC65_SRC)/libsrc/bbc-clib" ]; then \
+			echo "Copying manifest files to CC65 project..."; \
+			cp $(WRK)/excluded_functions.manifest $(CC65_SRC)/libsrc/bbc-clib/excluded_functions.manifest 2>/dev/null || echo "Warning: Could not copy excluded_functions.manifest"; \
+			cp $(WRK)/rom_functions.manifest $(CC65_SRC)/libsrc/bbc-clib/rom_functions.manifest 2>/dev/null || echo "Warning: Could not copy rom_functions.manifest"; \
+			echo "Manifest files updated in CC65 project."; \
+		else \
+			echo "Warning: $(CC65_SRC)/libsrc/bbc-clib directory not found - manifests not copied"; \
+		fi; \
+	else \
+		echo "Warning: CC65_SRC directory $(CC65_SRC) not found - manifests not copied"; \
+		echo "Set CC65_SRC environment variable to your cc65 source directory if needed"; \
+	fi
