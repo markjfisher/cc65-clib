@@ -50,13 +50,15 @@ X:=$(shell mkdir -p $(WRK)/oslib)
 
 .PHONY:clean all 
 
-all:: $(OBJS) $(BUILD)/clib.rom $(WRK)/clib_stubs.s $(BUILD)/clib.lib | $(WRK) $(WRK)/oslib
+all:: $(OBJS) $(BUILD)/clib.rom $(WRK)/clib_stubs.s $(BUILD)/clib.lib $(BUILD)/clib.lbl $(BUILD)/clib-mos.lbl | $(WRK) $(WRK)/oslib
 
 clean::
-	rm -r $(WRK) 2>/dev/null
-	rm $(BUILD)/clib.rom 2>/dev/null
-	rm $(BUILD)/clib.lib 2>/dev/null
-	rm $(BUILD)/clib.map 2>/dev/null
+	-rm -r $(WRK) 2>/dev/null
+	-rm $(BUILD)/clib.rom 2>/dev/null
+	-rm $(BUILD)/clib.lib 2>/dev/null
+	-rm $(BUILD)/clib.map 2>/dev/null
+	-rm $(BUILD)/clib.lbl 2>/dev/null
+	-rm $(BUILD)/clib-mos.lbl 2>/dev/null
 
 
 $(WRK)/clib_rom.o: clib_rom.s $(CLIB_INCS)
@@ -101,6 +103,10 @@ $(WRK)/oslib/%.s: $(BBCDIR)/oslib/%.c
 
 $(WRK)/clib_stubs.s: $(BUILD)/clib.map clib_stubs.pl clib_stubs.py
 	$(CLIB_STUBS_SCRIPT) $(BUILD)/clib.map $(WRK)/clib_stubs.s
+
+$(BUILD)/clib.lbl $(BUILD)/clib-mos.lbl: $(BUILD)/clib.map clib_stubs.pl clib_stubs.py
+	$(CLIB_STUBS_SCRIPT) $(BUILD)/clib.map $(WRK)/clib_stubs_temp.s $(BUILD)/clib.lbl $(BUILD)/clib-mos.lbl
+	@rm -f $(WRK)/clib_stubs_temp.s
 
 $(BUILD)/clib.rom $(BUILD)/clib.map &: $(WRK)/clib_rom.o $(RTOBJS) clib_rom.cfg
 	-rm $(BUILD)/clib_rom.tmp.lib

@@ -15,7 +15,9 @@ from typing import Dict, NamedTuple
 
 def usage(msg: str):
     """Print usage message and exit."""
-    print(f"{sys.argv[0]} <rom_map.map> <output.s>", file=sys.stderr)
+    print(f"{sys.argv[0]} <rom_map.map> <output.s> [clib.lbl] [clib-mos.lbl]", file=sys.stderr)
+    print("  Generates assembler stubs and VICE symbol files from ROM map", file=sys.stderr)
+    print("  If VICE files not specified, generates clib.lbl and clib-mos.lbl in build dir", file=sys.stderr)
     print(file=sys.stderr)
     sys.exit(msg)
 
@@ -120,19 +122,71 @@ class MapParser:
         
         except IOError as e:
             usage(f"Cannot open {output_file} for output: {e}")
+    
+    def generate_vice_symbol_files(self, clib_file: str, mos_file: str) -> None:
+        """Generate VICE symbol files split by address range."""
+        clib_symbols = []  # Address range 8000-C000 
+        mos_symbols = []   # All other symbols
+        
+        for symbol_name in sorted(self.symbols.keys()):
+            symbol = self.symbols[symbol_name]
+            
+            # Skip symbols starting with '__' (internal symbols)
+            if symbol.name.startswith('__'):
+                continue
+            
+            # Convert address to integer for comparison
+            addr_int = int(symbol.address, 16)
+            
+            # Format as VICE symbol line: al 008000 .name
+            vice_line = f"al {symbol.address} .{symbol.name}\n"
+            
+            # Split by address range
+            if 0x8000 <= addr_int < 0xC000:
+                clib_symbols.append(vice_line)
+            else:
+                mos_symbols.append(vice_line)
+        
+        # Write clib.lbl file (8000-C000 range)
+        try:
+            with open(clib_file, 'w') as f:
+                f.writelines(clib_symbols)
+        except IOError as e:
+            print(f"Warning: Cannot write {clib_file}: {e}", file=sys.stderr)
+        
+        # Write clib-mos.lbl file (other symbols) 
+        try:
+            with open(mos_file, 'w') as f:
+                f.writelines(mos_symbols)
+        except IOError as e:
+            print(f"Warning: Cannot write {mos_file}: {e}", file=sys.stderr)
 
 
 def main():
     """Main entry point."""
-    if len(sys.argv) != 3:
+    if len(sys.argv) < 3 or len(sys.argv) > 5:
         usage("wrong number of arguments")
     
     input_file = sys.argv[1]
     output_file = sys.argv[2]
     
+    # Optional VICE symbol file paths
+    if len(sys.argv) >= 4:
+        clib_lbl_file = sys.argv[3]
+        mos_lbl_file = sys.argv[4] if len(sys.argv) == 5 else sys.argv[3].replace('clib.lbl', 'clib-mos.lbl')
+    else:
+        # Generate default VICE file names in build directory
+        import os
+        base_dir = os.path.dirname(output_file)
+        if not base_dir:
+            base_dir = '../build'
+        clib_lbl_file = os.path.join(base_dir, 'clib.lbl')
+        mos_lbl_file = os.path.join(base_dir, 'clib-mos.lbl')
+    
     parser = MapParser()
     parser.parse_map_file(input_file)
     parser.generate_stubs_file(output_file)
+    parser.generate_vice_symbol_files(clib_lbl_file, mos_lbl_file)
 
 
 if __name__ == "__main__":

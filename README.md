@@ -13,9 +13,6 @@ ROM, it requires executables to use matching versions of the .lib file and
 .rom. It is intended that some form of vectoring/jump tables/live relocation
 be used to allow programs built with and older clib to use a newer ROM
 
-The ROM must be loaded in slot #1, there is so far no mechanism for 
-discovering the presence and location of the ROM
-
 ## Build System
 
 The build process uses scripts to analyze object file dependencies and generate
