@@ -1,7 +1,3 @@
-# Python Script Equivalents
-
-This directory contains Python equivalents of the Perl scripts used in the build process. Both versions produce identical output and can be used interchangeably.
-
 ## Scripts
 
 ### `clib_imports.py`

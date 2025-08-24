@@ -1,29 +1,19 @@
 BUILD=../build
 
-# Choose scripting language: perl or python
-SCRIPT_LANG ?= python
-
 # CC65 source directory for manifest file copying (loose coupling)
 CC65_SRC ?= ../../cc65
 
+# If the bbc and bbc-clib cc65's get merged, may need to add "-D BBC_CLIB" into CCOPT and ASOPT
 LD=ld65
 LDOPT=-v -vm
 CC=cc65
-CCOPT=-D BBC_CLIB -g -T -O -Or -r -I libsrc/bbc -I libsrc/runtime
+CCOPT=-g -T -O -Or -r -I libsrc/bbc -I libsrc/runtime
 AS=ca65
-ASOPT=-t bbc -D BBC_CLIB
+ASOPT=-t bbc
 AR=ar65
 
-# Script selection based on SCRIPT_LANG
-ifeq ($(SCRIPT_LANG),perl)
-    CLIB_IMPORTS_SCRIPT = perl clib_imports.pl
-    CLIB_STUBS_SCRIPT = perl clib_stubs.pl
-else ifeq ($(SCRIPT_LANG),python)
-    CLIB_IMPORTS_SCRIPT = python3 clib_imports.py
-    CLIB_STUBS_SCRIPT = python3 clib_stubs.py
-else
-    $(error SCRIPT_LANG must be either 'perl' or 'python')
-endif
+CLIB_IMPORTS_SCRIPT = python3 clib_imports.py
+CLIB_STUBS_SCRIPT = python3 clib_stubs.py
 
 RTDIR=libsrc/runtime
 COMDIR=libsrc/common
@@ -51,9 +41,9 @@ X:=$(shell mkdir -p $(WRK))
 X:=$(shell mkdir -p $(WRK)/oslib)
 
 
-.PHONY:clean all copy-manifests 
+.PHONY:clean all copy-cc65-artifacts 
 
-all:: $(OBJS) $(BUILD)/clib.rom $(WRK)/clib_stubs.s $(BUILD)/clib.lib $(BUILD)/clib.lbl $(BUILD)/clib-mos.lbl copy-manifests | $(WRK) $(WRK)/oslib
+all:: $(OBJS) $(BUILD)/clib.rom $(WRK)/clib_stubs.s $(BUILD)/clib.lib $(BUILD)/clib.lbl $(BUILD)/clib-mos.lbl copy-cc65-artifacts | $(WRK) $(WRK)/oslib
 
 clean::
 	-rm -r $(WRK) 2>/dev/null
@@ -122,19 +112,19 @@ $(BUILD)/clib.lib: $(WRK)/clib_stubs.o $(CLIB_STUBS_LST)
 	$(AR) a $@ $(shell cat $(CLIB_STUBS_LST))
 
 # Copy manifest files to CC65 project for build integration (loose coupling)
-.PHONY: copy-manifests
-copy-manifests: $(CLIB_INCS) $(WRK)/clib_stubs.s
+.PHONY: copy-cc65-artifacts
+copy-cc65-artifacts: $(CLIB_INCS) $(WRK)/clib_stubs.s
 	@echo "Checking for CC65 project at $(CC65_SRC)..."
 	@if [ -d "$(CC65_SRC)" ]; then \
 		echo "Found CC65 source directory: $(CC65_SRC)"; \
 		if [ -d "$(CC65_SRC)/libsrc/bbc-clib" ]; then \
-			echo "Copying manifest files to CC65 project..."; \
+			echo "Copying bbc build artifacts to CC65 project..."; \
 			cp $(WRK)/excluded_functions.manifest $(CC65_SRC)/libsrc/bbc-clib/excluded_functions.manifest 2>/dev/null || echo "Warning: Could not copy excluded_functions.manifest"; \
 			cp $(WRK)/rom_functions.manifest $(CC65_SRC)/libsrc/bbc-clib/rom_functions.manifest 2>/dev/null || echo "Warning: Could not copy rom_functions.manifest"; \
 			cp $(WRK)/clib_stubs.s $(CC65_SRC)/libsrc/bbc-clib/clib_stubs.s 2>/dev/null || echo "Warning: Could not copy clib_stubs.s"; \
-			echo "Manifest files updated in CC65 project."; \
+			echo "Manifest and stub files updated in CC65 project."; \
 		else \
-			echo "Warning: $(CC65_SRC)/libsrc/bbc-clib directory not found - manifests not copied"; \
+			echo "Warning: $(CC65_SRC)/libsrc/bbc-clib directory not found - artifacts not copied"; \
 		fi; \
 	else \
 		echo "Warning: CC65_SRC directory $(CC65_SRC) not found - manifests not copied"; \

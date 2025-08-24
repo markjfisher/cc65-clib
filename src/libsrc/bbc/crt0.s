@@ -36,14 +36,6 @@ __Cstart:
 
 reset:
 
-	.ifdef BBC_CLIB
-	lda	$F4
-	pha
-	lda	#1		; TODO: find which ROM
-	sta	$F4
-	sta	$FE30
-	.endif
-
 	jsr	zerobss
 	jsr	disable_cursor_edit
 	jsr	init_stack
@@ -111,12 +103,6 @@ l1:	sei
 	cli
 	
 	jsr	restore_cursor_edit
-
-	.ifdef BBC_CLIB
-	pla
-	sta	$F4
-	sta	$FE30
-	.endif
 
 exit:   rts
 

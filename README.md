@@ -1,11 +1,11 @@
 # cc65-clib
 
-BBC Micro cc65 clib in ROM. 
+BBC Micro cc65 clib in ROM.
+
+Forked from https://github.com/dominicbeesley/cc65-clib
+added rom-detection, and changes to move more functions into ROM (e.g. osfile_*)
 
 *** EXPERIMENTAL *** NOT TO BE USED IN PRODUCTION ***
-
-This is only a test build but demonstrated moving some of the larger parts of 
-the c-library into a sideways ROM
 
 At present this is quite limited but does free up a lot of RAM space, there
 is currently no mechanism for versioning or otherwise future-proofing the
@@ -16,22 +16,19 @@ be used to allow programs built with and older clib to use a newer ROM
 ## Build System
 
 The build process uses scripts to analyze object file dependencies and generate
-ROM/stub interfaces. Both Perl and Python versions are available:
+ROM/stub interfaces.
 
-- **Python scripts (default)**: `clib_imports.py`, `clib_stubs.py` 
-- **Perl scripts**: `clib_imports.pl`, `clib_stubs.pl`
+- **Python scripts (default)**: `clib_imports.py`, `clib_stubs.py`
+- **Perl scripts**: DEPRECATED: `clib_imports.pl`, `clib_stubs.pl`
 
-To build with Python scripts:
+The perl scripts no longer maintain functional parity with python, missing some of the copying
+steps. TODO: restore parity or ditch perl.
+
 ```bash
 cd src && make
 ```
 
-To build with Perl scripts:
-```bash  
-cd src && make SCRIPT_LANG=perl
-```
-
-See `PYTHON_SCRIPTS.md` for detailed documentation of the Python equivalents.
+See `PYTHON_SCRIPTS.md` for detailed documentation.
 
 ### Integration with cc65 Project
 
@@ -46,10 +43,11 @@ to ensure proper ROM/local function splitting. This uses loose coupling via the
 # Use default cc65 location
 cd src && make
 
-# Use custom cc65 location  
+# Use custom cc65 src location  
 CC65_SRC=/path/to/your/cc65 make
 ```
 
 The build will report if the cc65 directory is not found but will not fail,
-allowing the cc65-clib project to be built independently.
+allowing the cc65-clib project to be built independently, however it will not be able
+to copy artifacts from its build needed for cc65 to build bbc-clib target.
 
