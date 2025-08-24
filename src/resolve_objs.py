@@ -4,157 +4,135 @@ import os
 import re
 import argparse
 
-SRCDIRS = [
-    "bbc",
-    "common",
-    "conio",
-    "dbg",
-    "em",
-    "joystick",
-    "mouse",
-    "runtime",
-    "serial",
-    "tgi",
-    "zlib",
-]
-
-# C function definition heuristic (captures the identifier before '(')
-FUNC_DEF_RE = re.compile(r'^\s*(?:[A-Za-z_][\w\s\*]*\s+)*([A-Za-z_][A-Za-z0-9_]*)\s*\(')
-
-# Identifier (symbol) matcher: start with letter/underscore, then alnum/underscore
 IDENT_RE = re.compile(r'^[A-Za-z_][A-Za-z0-9_]*$')
 
-def parse_manifest(exclude_file):
+SECTION_NAMES = {
+    "Header:", "Options:", "Files:", "Segments:", "Imports:", "Exports:",
+    "Debug symbols:", "Line infos:", "String pool:", "Assertions:",
+    "Scopes:", "Segment sizes:",
+}
+
+def parse_manifest(path):
     funcs = []
-    with open(exclude_file) as f:
+    with open(path, "r", errors="ignore") as f:
         for line in f:
-            line = line.strip()
-            if not line or line.startswith("#"):
+            s = line.strip()
+            if not s or s.startswith("#"):
                 continue
-            funcs.append(line)
+            funcs.append(s)
     return funcs
 
-def strip_comment(line: str) -> str:
-    # ca65 comments start with ';' – drop it and anything after
-    return line.split(";", 1)[0]
+def pick_best_source(candidates, info_stem):
+    if not candidates:
+        return None
 
-def parse_export_item(item: str):
-    """
-    Parse a single comma-separated .export item.
-    Returns (primary_symbol, alias_target_symbol_or_None).
-    Accepts forms like:
-      name
-      name:zp
-      name = other
-      name:abs = other
-      name = other:attr
-      name = $00  (alias to numeric -> target ignored)
-    """
-    s = item.strip()
-    if not s:
-        return (None, None)
+    def stem(p): return os.path.splitext(os.path.basename(p))[0].lower()
 
-    # primary is the identifier at the start
-    m_primary = re.match(r'^([A-Za-z_][A-Za-z0-9_]*)', s)
-    primary = m_primary.group(1) if m_primary else None
+    # 1) exact stem match first
+    for p in candidates:
+        if stem(p) == info_stem.lower():
+            chosen = p
+            break
+    else:
+        # 2) prefer .c over .s
+        cands_c = [p for p in candidates if p.lower().endswith(".c")]
+        chosen = cands_c[0] if cands_c else candidates[0]
 
-    # look for "= target"
-    m_target = re.search(r'=\s*([A-Za-z_][A-Za-z0-9_]*)', s)
-    target = m_target.group(1) if m_target else None
+    rel = chosen[len("libsrc/"):] if chosen.startswith("libsrc/") else chosen
+    base, _ = os.path.splitext(rel)
+    return f"{base}.o"
 
-    return (primary, target)
+def parse_info_file(path):
+    with open(path, "r", errors="ignore") as f:
+        lines = f.readlines()
 
-def build_export_map(libsrc_root):
-    export_map = {}
-    for subdir in SRCDIRS:
-        full_dir = os.path.join(libsrc_root, subdir)
-        if not os.path.isdir(full_dir):
+    info_stem = os.path.splitext(os.path.basename(path))[0]
+    current_section = None
+    files = []
+    exports = set()
+
+    for raw in lines:
+        line = raw.rstrip("\n")
+        stripped = line.strip()
+
+        # Section header? (Headers in od65 .info are often indented)
+        if stripped in SECTION_NAMES:
+            # Switch section explicitly
+            if stripped == "Files:":
+                current_section = "Files"
+            elif stripped == "Exports:":
+                current_section = "Exports"
+            else:
+                current_section = stripped[:-1]  # e.g. "Imports", "Debug symbols", etc.
             continue
-        for fname in os.listdir(full_dir):
-            path = os.path.join(full_dir, fname)
 
-            if fname.endswith(".s"):
-                rel_obj = os.path.join(subdir, fname.replace(".s", ".o"))
-                with open(path) as f:
-                    for raw in f:
-                        line = strip_comment(raw)
-                        if not line.strip():
-                            continue
+        if current_section == "Files":
+            # Match both `Name:  "..."` and `Name:"..."`
+            m = re.search(r'Name:\s*"([^"]+)"', line)
+            if m:
+                name = m.group(1)
+                lower = name.lower()
+                # Only keep original lib sources, not generated build paths
+                if lower.startswith("libsrc/") and (lower.endswith(".c") or lower.endswith(".s")):
+                    files.append(name)
 
-                        # 1) .export lines (multiple items, alias forms, attributes)
-                        m = re.match(r'\s*\.export\s+(.+)', line)
-                        if m:
-                            items = [x.strip() for x in m.group(1).split(",")]
-                            for it in items:
-                                primary, target = parse_export_item(it)
-                                if primary and IDENT_RE.match(primary):
-                                    export_map[primary] = rel_obj
-                                if target and IDENT_RE.match(target):
-                                    export_map[target] = rel_obj
-                            continue
+        elif current_section == "Exports":
+            m = re.search(r'Name:\s*"([^"]+)"', line)
+            if m:
+                sym = m.group(1)
+                if IDENT_RE.match(sym):
+                    exports.add(sym)
 
-                        # 2) .proc lines
-                        m = re.match(r'\s*\.proc\s+([A-Za-z_][A-Za-z0-9_]*)', line)
-                        if m:
-                            sym = m.group(1)
-                            if IDENT_RE.match(sym) and sym.startswith("_"):
-                                export_map[sym] = rel_obj
-                            continue
+        # All other sections are ignored for symbol collection
 
-                        # 3) label lines at column 0
-                        m = re.match(r'^([A-Za-z_][A-Za-z0-9_]*)\s*:', line)
-                        if m:
-                            sym = m.group(1)
-                            # Only treat global-like function entrypoints (start with underscore)
-                            if sym.startswith("_"):
-                                export_map[sym] = rel_obj
-                            continue
+    # Prefer a real libsrc source; if none, fall back to stem.o to avoid dropping symbols silently
+    obj_rel = pick_best_source(files, info_stem) or f"{info_stem}.o"
+    return obj_rel, exports
 
-            elif fname.endswith(".c"):
-                rel_obj = os.path.join(subdir, fname.replace(".c", ".o"))
-                with open(path, errors="ignore") as f:
-                    for raw in f:
-                        line = strip_comment(raw)
-                        if not line.strip():
-                            continue
-                        m = FUNC_DEF_RE.match(line)
-                        if m:
-                            cname = m.group(1)  # e.g., "__afailed"
-                            # Skip likely non-defs (e.g., 'if (...)', 'while (...)') by requiring identifier to be in IDENT_RE
-                            if not IDENT_RE.match(cname):
-                                continue
-                            sym = "_" + cname  # cc65 adds a leading underscore
-                            export_map[sym] = rel_obj
-    return export_map
+def build_symbol_map(build_libwrk_dir):
+    sym2obj = {}
+    for root, _, files in os.walk(build_libwrk_dir):
+        for fname in files:
+            if not fname.endswith(".info"):
+                continue
+            info_path = os.path.join(root, fname)
+            obj_rel, exports = parse_info_file(info_path)
+            for sym in exports:
+                sym2obj[sym] = obj_rel
+    return sym2obj
 
 def main():
-    parser = argparse.ArgumentParser(description="Resolve cc65 excluded functions manifest to object files")
-    parser.add_argument("libsrc_root", help="Path to cc65/libsrc")
-    parser.add_argument("exclude_file", help="Path to excluded_functions.manifest")
-    parser.add_argument("--dump-symbols", action="store_true",
-                        help="Dump full symbol → object map instead of Makefile output")
-    args = parser.parse_args()
+    ap = argparse.ArgumentParser(
+        description="Resolve cc65 excluded functions manifest to object files using od65 .info files"
+    )
+    ap.add_argument("build_libwrk_dir", nargs="?", default="./build/libwrk",
+                    help="Path to build/libwrk directory (default: ./build/libwrk)")
+    ap.add_argument("exclude_file", help="Path to excluded_functions.manifest")
+    ap.add_argument("--dump-symbols", action="store_true",
+                    help="Dump full symbol → object map (from .info files)")
+    args = ap.parse_args()
 
-    funcs = parse_manifest(args.exclude_file)
-    export_map = build_export_map(args.libsrc_root)
+    symmap = build_symbol_map(args.build_libwrk_dir)
 
     if args.dump_symbols:
-        for sym, obj in sorted(export_map.items()):
-            print(f"{sym:24} -> {obj}")
+        for sym in sorted(symmap):
+            print(f"{sym:24} -> {symmap[sym]}")
         return
 
+    wanted = parse_manifest(args.exclude_file)
     needed_objs = set()
     unresolved = []
 
-    for func in funcs:
-        if func in export_map:
-            needed_objs.add(export_map[func])
+    for sym in wanted:
+        obj = symmap.get(sym)
+        if obj:
+            needed_objs.add(obj)
         else:
-            unresolved.append(func)
+            unresolved.append(sym)
 
     print(f"EXCLUDED_OBJS := {' '.join(sorted(needed_objs))}")
 
-    sys.stderr.write(f"Resolved {len(funcs) - len(unresolved)} / {len(funcs)} functions "
+    sys.stderr.write(f"Resolved {len(wanted) - len(unresolved)} / {len(wanted)} functions "
                      f"into {len(needed_objs)} unique object files\n")
     if unresolved:
         sys.stderr.write("Unresolved functions:\n")
