@@ -9,7 +9,7 @@
         .importzp       clib_ws
         .importzp       clib_jptr
 
-        .include        "clib_ws.inc"
+        .include        "bbc.inc"
 
         .code
 

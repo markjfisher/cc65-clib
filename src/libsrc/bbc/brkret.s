@@ -2,7 +2,7 @@
         .importzp       clib_ws
         ; no c_sp, no subysp/addysp needed
 
-        .include        "clib_ws.inc"
+        .include        "bbc.inc"
 
         .code
 
