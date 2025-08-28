@@ -1,9 +1,10 @@
-BUILD=../build
+BUILD := ../build
+WRK   := $(BUILD)/libwrk
+OUT   := $(BUILD)
 
 # CC65 source directory for manifest file copying (loose coupling)
 CC65_SRC ?= ../../cc65
 
-# If the bbc and bbc-clib cc65's get merged, may need to add "-D BBC_CLIB" into CCOPT and ASOPT
 LD=ld65
 LDOPT=-v -vm
 CC=cc65
@@ -13,46 +14,62 @@ ASOPT=-t bbc
 AR=ar65
 
 CLIB_IMPORTS_SCRIPT = python3 clib_imports.py
-CLIB_STUBS_SCRIPT = python3 clib_stubs.py
+CLIB_STUBS_SCRIPT   = python3 clib_stubs.py
+RESOLVE_OBJS_SCRIPT = python3 resolve_objs.py
 
 RTDIR=libsrc/runtime
 COMDIR=libsrc/common
 BBCDIR=libsrc/bbc
-RTSRCS=$(wildcard $(RTDIR)/*.s) 
-COMSRCS=$(shell find $(COMDIR) -iname "*.s" -o -iname "*.c")
-BBCSRCS=$(shell find $(BBCDIR) -iname "*.s" -o -iname "*.c")
-SRCSNOP=$(COMSRCS:$(COMDIR)/%=%) $(RTSRCS:$(RTDIR)/%=%) $(BBCSRCS:$(BBCDIR)/%=%)
 
-# $(info RTSRCS: $(RTSRCS))
-# $(info COMSRCS: $(COMSRCS))
-# $(info BBCSRCS: $(BBCSRCS))
-# $(info SRCSNOP: $(SRCSNOP))
+RTSRCS := $(wildcard $(RTDIR)/*.s)
+COMSRCS := $(shell find $(COMDIR) -iname "*.s" -o -iname "*.c")
+BBCSRCS := $(shell find $(BBCDIR) -iname "*.s" -o -iname "*.c")
+SRCSNOP := $(COMSRCS:$(COMDIR)/%=%) $(RTSRCS:$(RTDIR)/%=%) $(BBCSRCS:$(BBCDIR)/%=%)
 
-WRK=$(BUILD)/libwrk
+# Work products
+OBJS  := $(addprefix $(WRK)/, $(patsubst %.c, %.o, $(patsubst %.s,%.o,$(SRCSNOP))))
+INFOS := $(patsubst %.o, %.info, $(OBJS))
 
-RESOLVE_OBJS_SCRIPT = python3 resolve_objs.py
-EXCLUDED_OBJS_MK    = $(WRK)/excluded_objs.mk
+CLIB_RTIMPORT   := $(OUT)/clib_imports.inc
+CLIB_RTJUMPS    := $(OUT)/clib_imports_jmp.inc
+CLIB_OBJS_LST   := $(OUT)/clib_include_objs.lst
+CLIB_STUBS_LST  := $(OUT)/clib_include_lib_objs.lst
+EXCLUDED_OBJS_MK:= $(OUT)/excluded_objs.mk
+FINAL_OBJS_MK   := $(OUT)/final_objs.mk
+ROM_FUNCS_MAN   := $(OUT)/rom_functions.manifest
+EXCL_FUNCS_MAN  := $(OUT)/excluded_functions.manifest
 
-OBJS=$(addprefix $(WRK)/, $(patsubst %.c, %.o, $(patsubst %.s,%.o,$(SRCSNOP))))
-INFOS=$(patsubst %.o, %.info, $(OBJS))
+CLIB_STUBS_S    := $(OUT)/clib_stubs.s
 
-CLIB_RTIMPORT=$(WRK)/clib_imports.inc
-CLIB_RTJUMPS=$(WRK)/clib_imports_jmp.inc
-CLIB_OBJS_LST=$(WRK)/clib_include_objs.lst
-CLIB_STUBS_LST=$(WRK)/clib_include_lib_objs.lst
-CLIB_INCS= $(CLIB_RTIMPORT) $(CLIB_RTJUMPS) $(CLIB_OBJS_LST) $(CLIB_STUBS_LST)
+$(ROM_FUNCS_MAN) $(EXCL_FUNCS_MAN) $(FINAL_OBJS_MK): $(CLIB_INCS)
+	@true
 
+CLIB_INCS = $(CLIB_RTIMPORT) $(CLIB_RTJUMPS) $(CLIB_OBJS_LST) $(CLIB_STUBS_LST)
 
-X:=$(shell mkdir -p $(BUILD))
-X:=$(shell mkdir -p $(WRK))
-X:=$(shell mkdir -p $(WRK)/oslib)
+.PHONY: all clean generate copy-cc65-artifacts rom lib
 
+# --------------------------------------------------------------------
+# Top-levels
+# --------------------------------------------------------------------
 
-.PHONY:clean all copy-cc65-artifacts
+# Full pipeline: build objects, ROM image, stubs, lib, labels, and copy to cc65
+all: generate copy-cc65-artifacts
 
-all:: $(OBJS) $(BUILD)/clib.rom $(WRK)/clib_stubs.s $(BUILD)/clib.lib $(BUILD)/clib.lbl $(BUILD)/clib-mos.lbl $(EXCLUDED_OBJS_MK) copy-cc65-artifacts | $(WRK) $(WRK)/oslib
+generate: $(OBJS) $(INFOS) $(CLIB_INCS) $(EXCLUDED_OBJS_MK) $(CLIB_STUBS_S) $(BUILD)/clib.lbl $(BUILD)/clib-mos.lbl rom lib
+	@echo "Artifacts generated in $(WRK):"
+	@echo "  - clib_imports.inc / clib_imports_jmp.inc"
+	@echo "  - clib_include_objs.lst (ROM lib contents)"
+	@echo "  - clib_include_lib_objs.lst (bbc-clib.lib contents)"
+	@echo "  - rom_functions.manifest / excluded_functions.manifest"
+	@echo "  - final_objs.mk (definitive basenames for cc65/libsrc bbc-clib)"
+	@echo "  - excluded_objs.mk (resolved objs by symbol scan)"
+	@echo "  - clib_stubs.s / *.lbl"
 
-clean::
+# Keep for convenience if you want to build ROM or LIB separately
+rom: $(BUILD)/clib.rom
+lib: $(BUILD)/clib.lib
+
+clean:
 	-rm -r $(WRK) 2>/dev/null
 	-rm $(BUILD)/clib.rom 2>/dev/null
 	-rm $(BUILD)/clib.lib 2>/dev/null
@@ -60,18 +77,28 @@ clean::
 	-rm $(BUILD)/clib.lbl 2>/dev/null
 	-rm $(BUILD)/clib-mos.lbl 2>/dev/null
 
+# Directory targets
+$(BUILD):
+	@mkdir -p $@
 
-$(WRK)/clib_rom.o: clib_rom.s $(CLIB_INCS)
-	$(AS) $(ASOPT) -I $(WRK) -o $@ $<
+$(WRK):
+	@mkdir -p $@
 
-$(CLIB_INCS): $(RTSRCS) clib_imports.py $(WRK) $(OBJS) $(INFOS) 
-	$(CLIB_IMPORTS_SCRIPT) $(CLIB_RTIMPORT) $(CLIB_RTJUMPS) $(CLIB_OBJS_LST) $(CLIB_STUBS_LST) $(INFOS)
+$(OUT):
+	@mkdir -p $@
+
+$(WRK)/oslib:
+	@mkdir -p $@
 
 
-$(WRK)/%.info: $(WRK)/%.o
+# --------------------------------------------------------------------
+# Object / info generation
+# --------------------------------------------------------------------
+
+$(WRK)/%.info: $(WRK)/%.o | $(WRK)
 	od65 --dump-all $< >$@
 
-$(WRK)/oslib/%.info: $(WRK)/oslib/%.o
+$(WRK)/oslib/%.info: $(WRK)/oslib/%.o | $(WRK)
 	od65 --dump-all $< >$@
 
 $(WRK)/%.o: $(RTDIR)/%.s | $(WRK)
@@ -86,57 +113,117 @@ $(WRK)/%.o: $(BBCDIR)/%.s | $(WRK)
 $(WRK)/oslib/%.o: $(BBCDIR)/oslib/%.s | $(WRK)/oslib
 	$(AS) $(ASOPT) -o $@ $<
 
-$(WRK)/%.o: $(WRK)/%.s
+$(WRK)/%.o: $(WRK)/%.s | $(WRK)
 	$(AS) $(ASOPT) -o $@ $<
 
-$(WRK)/%.s: $(RTDIR)/%.c
+$(WRK)/%.s: $(RTDIR)/%.c | $(WRK)
 	$(CC) $(CCOPT) -o $@ $<
 
-$(WRK)/%.s: $(COMDIR)/%.c
+$(WRK)/%.s: $(COMDIR)/%.c | $(WRK)
 	$(CC) $(CCOPT) -o $@ $<
 
-$(WRK)/%.s: $(BBCDIR)/%.c
+$(WRK)/%.s: $(BBCDIR)/%.c | $(WRK)
 	$(CC) $(CCOPT) -o $@ $<
 
-$(WRK)/oslib/%.s: $(BBCDIR)/oslib/%.c
+$(WRK)/oslib/%.s: $(BBCDIR)/oslib/%.c | $(WRK)/oslib
 	$(CC) $(CCOPT) -o $@ $<
 
-$(WRK)/clib_stubs.s: $(BUILD)/clib.map clib_stubs.py
-	$(CLIB_STUBS_SCRIPT) $(BUILD)/clib.map $(WRK)/clib_stubs.s
+$(OUT)/%.o: $(OUT)/%.s | $(OUT)
+	$(AS) $(ASOPT) -o $@ $<
 
-$(BUILD)/clib.lbl $(BUILD)/clib-mos.lbl: $(BUILD)/clib.map clib_stubs.py
+# --------------------------------------------------------------------
+# Imports / manifests / final list generation
+# --------------------------------------------------------------------
+
+# clib_imports.py writes ALL of these files in $(WRK):
+#   - clib_imports.inc, clib_imports_jmp.inc
+#   - clib_include_objs.lst, clib_include_lib_objs.lst
+#   - rom_functions.manifest, excluded_functions.manifest
+#   - final_objs.mk
+
+# One stamp that drives the generator
+IMPORTS_STAMP := $(WRK)/clib_imports.stamp
+
+# Every file produced by clib_imports.py
+GEN_ARTIFACTS := \
+  $(CLIB_RTIMPORT) \
+  $(CLIB_RTJUMPS)  \
+  $(CLIB_OBJS_LST) \
+  $(CLIB_STUBS_LST)\
+  $(ROM_FUNCS_MAN) \
+  $(EXCL_FUNCS_MAN)\
+  $(FINAL_OBJS_MK)
+
+# All artifacts are built when the stamp is built
+$(GEN_ARTIFACTS): $(IMPORTS_STAMP)
+
+# Build the stamp (runs the script ONCE)
+$(IMPORTS_STAMP): $(RTSRCS) clib_imports.py $(OBJS) $(INFOS) | $(WRK) $(OUT)
+	$(CLIB_IMPORTS_SCRIPT) \
+		$(CLIB_RTIMPORT) $(CLIB_RTJUMPS) \
+		$(CLIB_OBJS_LST) $(CLIB_STUBS_LST) \
+		--cc65-libsrc $(CC65_SRC)/libsrc \
+		--target bbc-clib \
+		$(INFOS)
+	@touch $@
+
+# Optional: your old resolve pass still supported (consumes excluded_functions.manifest)
+$(EXCLUDED_OBJS_MK): resolve_objs.py $(EXCL_FUNCS_MAN) $(INFOS) | $(WRK)
+	$(RESOLVE_OBJS_SCRIPT) $(WRK) $(EXCL_FUNCS_MAN) > $@
+
+# --------------------------------------------------------------------
+# ROM image and lib build
+# --------------------------------------------------------------------
+
+# Assemble the tiny ROM "loader" object that pulls in the jump table
+$(WRK)/clib_rom.o: clib_rom.s $(CLIB_INCS) | $(WRK)
+	$(AS) $(ASOPT) -I $(WRK) -I $(OUT) -o $@ $<
+
+# Link once via a stamp; this produces BOTH clib.rom and clib.map
+CLIB_LINK_STAMP := $(WRK)/clib_link.stamp
+
+$(CLIB_LINK_STAMP): $(WRK)/clib_rom.o clib_rom.cfg $(CLIB_OBJS_LST) | $(BUILD)
+	-rm -f $(BUILD)/clib_rom.tmp.lib
+	$(AR) a $(BUILD)/clib_rom.tmp.lib $(shell cat $(CLIB_OBJS_LST))
+	$(LD) $(LDOPT) -m $(BUILD)/clib.map -C clib_rom.cfg \
+		-o $(BUILD)/clib.rom $(WRK)/clib_rom.o $(BUILD)/clib_rom.tmp.lib
+	@touch $@
+
+# Both outputs are considered up-to-date when the stamp is updated
+$(BUILD)/clib.rom $(BUILD)/clib.map: $(CLIB_LINK_STAMP)
+
+# Generate assembler stubs from the ROM map
+$(CLIB_STUBS_S): $(BUILD)/clib.map clib_stubs.py | $(OUT)
+	$(CLIB_STUBS_SCRIPT) $(BUILD)/clib.map $(CLIB_STUBS_S)
+
+# Generate VICE label files from the ROM map
+$(BUILD)/clib.lbl $(BUILD)/clib-mos.lbl: $(BUILD)/clib.map clib_stubs.py | $(BUILD)
 	$(CLIB_STUBS_SCRIPT) $(BUILD)/clib.map $(WRK)/clib_stubs_temp.s $(BUILD)/clib.lbl $(BUILD)/clib-mos.lbl
 	@rm -f $(WRK)/clib_stubs_temp.s
 
-$(BUILD)/clib.rom $(BUILD)/clib.map &: $(WRK)/clib_rom.o $(RTOBJS) clib_rom.cfg
-	-rm $(BUILD)/clib_rom.tmp.lib
-	$(AR) a $(BUILD)/clib_rom.tmp.lib $(shell cat $(CLIB_OBJS_LST))
-	$(LD) $(LDOPT) -m $(BUILD)/clib.map -C clib_rom.cfg -o $(BUILD)/clib.rom $(WRK)/clib_rom.o $(BUILD)/clib_rom.tmp.lib
-
-$(BUILD)/clib.lib: $(WRK)/clib_stubs.o $(CLIB_STUBS_LST)
-	-rm $(BUILD)/clib.lib >/dev/null
-	$(AR) a $@ $(WRK)/clib_stubs.o
+# Build the companion static library that holds non-ROM objects + the stubs
+$(BUILD)/clib.lib: $(OUT)/clib_stubs.o $(CLIB_STUBS_LST) | $(BUILD)
+	-rm -f $(BUILD)/clib.lib
+	$(AR) a $@ $(OUT)/clib_stubs.o
 	$(AR) a $@ $(shell cat $(CLIB_STUBS_LST))
 
-$(EXCLUDED_OBJS_MK): resolve_objs.py $(WRK)/excluded_functions.manifest $(INFOS)
-	$(RESOLVE_OBJS_SCRIPT) $(WRK) $(WRK)/excluded_functions.manifest > $@
+# --------------------------------------------------------------------
+# Copy artifacts to cc65 (depends on generate)
+# --------------------------------------------------------------------
 
-
-copy-cc65-artifacts: $(CLIB_INCS) $(WRK)/clib_stubs.s $(EXCLUDED_OBJS_MK)
+copy-cc65-artifacts: generate
 	@echo "Checking for CC65 project at $(CC65_SRC)..."
 	@if [ -d "$(CC65_SRC)" ]; then \
 		echo "Found CC65 source directory: $(CC65_SRC)"; \
 		if [ -d "$(CC65_SRC)/libsrc/bbc-clib" ]; then \
 			echo "Copying bbc build artifacts to CC65 project..."; \
-			cp $(WRK)/excluded_functions.manifest $(CC65_SRC)/libsrc/bbc-clib/excluded_functions.manifest 2>/dev/null || echo "Warning: Could not copy excluded_functions.manifest"; \
-			cp $(WRK)/rom_functions.manifest      $(CC65_SRC)/libsrc/bbc-clib/rom_functions.manifest      2>/dev/null || echo "Warning: Could not copy rom_functions.manifest"; \
-			cp $(WRK)/clib_stubs.s                $(CC65_SRC)/libsrc/bbc-clib/clib_stubs.s                2>/dev/null || echo "Warning: Could not copy clib_stubs.s"; \
-			cp $(EXCLUDED_OBJS_MK)                $(CC65_SRC)/libsrc/bbc-clib/excluded_objs.mk            2>/dev/null || echo "Warning: Could not copy excluded_objs.mk"; \
-			echo "Manifest and stub files updated in CC65 project."; \
+			cp $(CLIB_STUBS_S)        $(CC65_SRC)/libsrc/bbc-clib/clib_stubs.s   2>/dev/null || echo "Warning: Could not copy clib_stubs.s"; \
+			cp $(OUT)/final_objs.mk   $(CC65_SRC)/libsrc/bbc-clib/final_objs.mk  2>/dev/null || echo "Warning: Could not copy final_objs.mk"; \
+			echo "Artifacts updated in CC65 project."; \
 		else \
 			echo "Warning: $(CC65_SRC)/libsrc/bbc-clib directory not found - artifacts not copied"; \
 		fi; \
 	else \
-		echo "Warning: CC65_SRC directory $(CC65_SRC) not found - manifests not copied"; \
-		echo "Set CC65_SRC environment variable to your cc65 source directory if needed"; \
+		echo "Warning: CC65_SRC directory $(CC65_SRC) not found - artifacts not copied"; \
+		echo "Set CC65_SRC to your cc65 source directory if needed"; \
 	fi
