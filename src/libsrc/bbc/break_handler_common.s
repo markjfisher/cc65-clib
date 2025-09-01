@@ -1,14 +1,20 @@
-; break_handler_ram_common.s
+; break_handler_common.s
 ; Shared state & RAM brkhandler used by both prod/debug installers.
 
-        .export  _clear_brk_ret
+        .export  _disarm_brk_ret
         .export  brkhandler
-
-        ; These are shared variables installers will import:
         .export  bh_brkret, bh_rtsto, bh_olds, bh_oldbrkv, bh_installed
+        .export  bh_mode, bh_dbg_entry
 
-        .import  _exit_main
-        .import  BRKV
+        .import  _exit
+
+; Absolute vectors/regs:
+ROMSEL_CURRENT  := $F4
+ROMSEL          := $FE30
+ERR_MSG_PTR     := $FD
+
+ESC_CODE        = $1B
+
 
         .bss
 bh_oldbrkv:   .res 2      ; saved BRKV (or debug chain target)
@@ -19,44 +25,20 @@ bh_installed: .res 1      ; 0/1: whether we've installed our handler into BRKV
 
         .code
 
-; Disarm guard and restore BRKV if we installed it.
-_clear_brk_ret:
+_disarm_brk_ret:
         php
         sei
-
-        ; Disarm guard if armed
-        lda     bh_brkret
-        ora     bh_brkret+1
-        beq     @maybe_restore
-        lda     #0
+        lda     #$00
         sta     bh_brkret
         sta     bh_brkret+1
-
-@maybe_restore:
-        lda     bh_installed
-        beq     @done
-        lda     bh_oldbrkv
-        sta     BRKV
-        lda     bh_oldbrkv+1
-        sta     BRKV+1
-        lda     #0
-        sta     bh_installed
-
-@done:
         plp
         rts
 
 
 ; RAM BRK handler
-;  - If ESC ($1B) → pass-through path: cleanup then chain to bh_oldbrkv.
-;  - If bh_brkret != 0 (armed) → perform “return via BRK” locally:
-;       * disarm
-;       * restore S from bh_olds
-;       * push saved return address (bh_rtsto)
-;       * A=1, RTS
-;  - Else pass-through.
 brkhandler:
         php
+        sei
         pha
         txa
         pha
@@ -65,17 +47,16 @@ brkhandler:
 
         ; ESC?
         ldy     #0
-        lda     ($FD),y
-        cmp     #$1B
-        beq     brk_pass
+        lda     (ERR_MSG_PTR),y
+        cmp     #ESC_CODE
+        beq     @pass
 
         ; armed?
         lda     bh_brkret
         ora     bh_brkret+1
-        beq     brk_pass
+        beq     @pass
 
         ; ---- armed return path ----
-
         ; disarm
         lda     #0
         sta     bh_brkret
@@ -100,15 +81,33 @@ brkhandler:
         lda     #1
         rts
 
-brk_pass:
-        ; Cleanup (user exit bits), restore regs, then chain to saved vector
-        jsr     _exit_main
+@pass:
+        lda     bh_mode
+        beq     bh_prod
 
-        pla
-        tay
-        pla
-        tax
-        pla
-        plp
+        ; if debug and entry is set, tail-jump there
+        lda     bh_dbg_entry
+        ora     bh_dbg_entry+1
+        beq     bh_prod
 
-        jmp     (bh_oldbrkv)
+        ; patch-and-jump (safe absolute)
+        php
+        sei
+        lda     bh_dbg_entry
+        sta     bh_jmp_loc
+        lda     bh_dbg_entry+1
+        sta     bh_jmp_loc + 1
+        plp     ; restores previous interrupt status value
+
+        jmp     $FFFF
+
+bh_jmp_loc = * - 2
+
+bh_prod:
+        ldy     #$00
+        lda     (ERR_MSG_PTR), y
+        jmp     _exit
+
+        .bss
+bh_dbg_entry:   .res 2
+bh_mode:        .res 1
