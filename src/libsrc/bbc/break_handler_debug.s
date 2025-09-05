@@ -3,6 +3,7 @@
 ; ROM-free: uses only OSWRCH (no CLIB ROM calls).
 
         .export  _set_brk_ret_debug
+        .export  _set_brk_debug_mode_only
 
         .import  _install_brk_handler_global   ; idempotent global install
         .import  bh_brkret, bh_rtsto, bh_olds
@@ -10,6 +11,23 @@
         .import  OSWRCH
 
         .code
+
+; common code
+set_bomb:
+        lda     #<bombmessage_and_hang
+        sta     bh_dbg_entry
+        lda     #>bombmessage_and_hang
+        sta     bh_dbg_entry+1
+        rts
+
+; This is a trap to use while in development mode, you can ensure you get a banner and hang your app at the exact error location
+; by calling this. Otherwise, without an armed escape handler, the application will simply exit.
+_set_brk_debug_mode_only:
+        jsr     _install_brk_handler_global      ; idempotent
+        lda     #$01
+        sta     bh_mode
+        jsr     set_bomb
+        rts
 
 ; returns A=0 on first return (armed), A=1 when returning via BRK
 _set_brk_ret_debug:
@@ -42,10 +60,7 @@ _set_brk_ret_debug:
         lda     #>trapbrk_dbg
         sta     bh_brkret+1
 
-        lda     #<bombmessage_and_hang
-        sta     bh_dbg_entry
-        lda     #>bombmessage_and_hang
-        sta     bh_dbg_entry+1
+        jsr     set_bomb
         plp
 
         lda     #0
@@ -113,10 +128,10 @@ hexdigs: .byte "0123456789ABCDEF"
 
 ; ---------- Debug banner (ROM-free) ----------
 m0: .byte "BRK occurred at &", 0
-m1: .byte 13, 10, "Y=", 0
-m2: .byte ", X=", 0
-m3: .byte ", A=", 0
-m4: .byte ", P=", 0
+m1: .byte 13, 10, "Y=&", 0
+m2: .byte ", X=&", 0
+m3: .byte ", A=&", 0
+m4: .byte ", P=&", 0
 m5: .byte 13, 10, "ERR=", 0
 m6: .byte " : ", 0
 
