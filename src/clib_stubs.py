@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 """
-Python equivalent of clib_stubs.pl
-
 Extracts map information for the ROM to a set of assembler defines to be
 exported in the library module.
 

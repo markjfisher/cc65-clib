@@ -35,13 +35,13 @@ CLIB_RTJUMPS    := $(OUT)/clib_imports_jmp.inc
 CLIB_OBJS_LST   := $(OUT)/clib_include_objs.lst
 CLIB_STUBS_LST  := $(OUT)/clib_include_lib_objs.lst
 EXCLUDED_OBJS_MK:= $(OUT)/excluded_objs.mk
-FINAL_OBJS_MK   := $(OUT)/final_objs.mk
+inc_objs_MK   := $(OUT)/inc_objs.mk
 ROM_FUNCS_MAN   := $(OUT)/rom_functions.manifest
 EXCL_FUNCS_MAN  := $(OUT)/excluded_functions.manifest
 
 CLIB_STUBS_S    := $(OUT)/clib_stubs.s
 
-$(ROM_FUNCS_MAN) $(EXCL_FUNCS_MAN) $(FINAL_OBJS_MK): $(CLIB_INCS)
+$(ROM_FUNCS_MAN) $(EXCL_FUNCS_MAN) $(inc_objs_MK): $(CLIB_INCS)
 	@true
 
 CLIB_INCS = $(CLIB_RTIMPORT) $(CLIB_RTJUMPS) $(CLIB_OBJS_LST) $(CLIB_STUBS_LST)
@@ -61,7 +61,7 @@ generate: $(OBJS) $(INFOS) $(CLIB_INCS) $(EXCLUDED_OBJS_MK) $(CLIB_STUBS_S) $(BU
 	@echo "  - clib_include_objs.lst (ROM lib contents)"
 	@echo "  - clib_include_lib_objs.lst (bbc-clib.lib contents)"
 	@echo "  - rom_functions.manifest / excluded_functions.manifest"
-	@echo "  - final_objs.mk (definitive basenames for cc65/libsrc bbc-clib)"
+	@echo "  - inc_objs.mk (definitive basenames for cc65/libsrc bbc-clib)"
 	@echo "  - excluded_objs.mk (resolved objs by symbol scan)"
 	@echo "  - clib_stubs.s / *.lbl"
 
@@ -139,7 +139,7 @@ $(OUT)/%.o: $(OUT)/%.s | $(OUT)
 #   - clib_imports.inc, clib_imports_jmp.inc
 #   - clib_include_objs.lst, clib_include_lib_objs.lst
 #   - rom_functions.manifest, excluded_functions.manifest
-#   - final_objs.mk
+#   - inc_objs.mk
 
 # One stamp that drives the generator
 IMPORTS_STAMP := $(WRK)/clib_imports.stamp
@@ -152,7 +152,7 @@ GEN_ARTIFACTS := \
   $(CLIB_STUBS_LST)\
   $(ROM_FUNCS_MAN) \
   $(EXCL_FUNCS_MAN)\
-  $(FINAL_OBJS_MK)
+  $(inc_objs_MK)
 
 # All artifacts are built when the stamp is built
 $(GEN_ARTIFACTS): $(IMPORTS_STAMP)
@@ -218,7 +218,7 @@ copy-cc65-artifacts: generate
 		if [ -d "$(CC65_SRC)/libsrc/bbc-clib" ]; then \
 			echo "Copying bbc build artifacts to CC65 project..."; \
 			cp $(CLIB_STUBS_S)        $(CC65_SRC)/libsrc/bbc-clib/clib_stubs.s   2>/dev/null || echo "Warning: Could not copy clib_stubs.s"; \
-			cp $(OUT)/final_objs.mk   $(CC65_SRC)/libsrc/bbc-clib/final_objs.mk  2>/dev/null || echo "Warning: Could not copy final_objs.mk"; \
+			cp $(OUT)/inc_objs.mk   $(CC65_SRC)/libsrc/bbc-clib/inc_objs.mk  2>/dev/null || echo "Warning: Could not copy inc_objs.mk"; \
 			echo "Artifacts updated in CC65 project."; \
 		else \
 			echo "Warning: $(CC65_SRC)/libsrc/bbc-clib directory not found - artifacts not copied"; \

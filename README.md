@@ -18,11 +18,7 @@ be used to allow programs built with and older clib to use a newer ROM
 The build process uses scripts to analyze object file dependencies and generate
 ROM/stub interfaces.
 
-- **Python scripts (default)**: `clib_imports.py`, `clib_stubs.py`
-- **Perl scripts**: DEPRECATED: `clib_imports.pl`, `clib_stubs.pl`
-
-The perl scripts no longer maintain functional parity with python, missing some of the copying
-steps. TODO: restore parity or ditch perl.
+- **Python scripts **: `clib_imports.py`, `clib_stubs.py`
 
 ```bash
 cd src && make

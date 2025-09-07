@@ -29,15 +29,15 @@
 */
 
 #ifndef types_H
-#include <oslib/types.h>
+#include "oslib/types.h"
 #endif
 
 #ifndef os_H
-#include <oslib/os.h>
+#include "oslib/os.h"
 #endif
 
 #ifndef fileswitch_H
-#include <oslib/fileswitch.h>
+#include "oslib/fileswitch.h"
 #endif
 
 #if defined NAMESPACE_OSLIB
