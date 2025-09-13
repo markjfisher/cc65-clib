@@ -217,7 +217,7 @@ copy-cc65-artifacts: generate
 		echo "Found CC65 source directory: $(CC65_SRC)"; \
 		if [ -d "$(CC65_SRC)/libsrc/bbc-clib" ]; then \
 			echo "Copying bbc build artifacts to CC65 project..."; \
-			cp $(CLIB_STUBS_S)        $(CC65_SRC)/libsrc/bbc-clib/clib_stubs.s   2>/dev/null || echo "Warning: Could not copy clib_stubs.s"; \
+			cp $(CLIB_STUBS_S)      $(CC65_SRC)/libsrc/bbc-clib/clib_stubs.s   2>/dev/null || echo "Warning: Could not copy clib_stubs.s"; \
 			cp $(OUT)/inc_objs.mk   $(CC65_SRC)/libsrc/bbc-clib/inc_objs.mk  2>/dev/null || echo "Warning: Could not copy inc_objs.mk"; \
 			echo "Artifacts updated in CC65 project."; \
 		else \
