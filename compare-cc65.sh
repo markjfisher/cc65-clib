@@ -1,236 +1,87 @@
 #!/bin/bash
-
-# Script to compare cc65/libsrc/bbc/ and cc65-clib/src/libsrc/bbc/ directories
-# Usage: ./compare-cc65.sh [options]
-# 
-# Options (to be implemented):
-#   -s, --sync     Synchronize directories (copy missing/different files)
-#   -v, --verbose  Verbose output
-#   -h, --help     Show this help
+#
+# compare-cc65.sh - compare / sync the bbc library sources between the canonical
+# cc65 fork (libsrc/bbc) and this project's copy (src/libsrc/bbc), which is what
+# the CLIB ROM is built from.
+#
+# The two trees should be functionally identical; cosmetic whitespace (tabs vs
+# spaces) is ignored. The one structural difference is the break handler: cc65
+# keeps brk/{bbc,bbc-clib}/break_handler_common.s while this project keeps a flat
+# break_handler_common.s, which must track cc65's ROM-aware brk/bbc-clib variant.
+#
+# Usage:
+#   ./compare-cc65.sh             # report functional differences (default)
+#   ./compare-cc65.sh --diff      # also show unified diffs of differing files
+#   ./compare-cc65.sh --sync      # copy cc65 -> here for functionally-diff files
+#   ./compare-cc65.sh -h
+#
+# Paths (overridable):
+#   CC65_SRC   cc65 fork checkout (default: ../cc65 relative to this script)
 
 set -euo pipefail
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
+CC65_SRC="${CC65_SRC:-$SCRIPT_DIR/../cc65}"
+SRC_DIR="$CC65_SRC/libsrc/bbc"                 # canonical
+DST_DIR="$SCRIPT_DIR/src/libsrc/bbc"           # this project's copy
+# The flat break handler here tracks cc65's ROM-aware variant:
+BRK_SRC="$SRC_DIR/brk/bbc-clib/break_handler_common.s"
+BRK_DST="$DST_DIR/break_handler_common.s"
 
-# Directory paths
-CC65_DIR="/home/markf/dev/bbc/cc65/libsrc/bbc"
-CC65_CLIB_DIR="/home/markf/dev/bbc/cc65-clib/src/libsrc/bbc"
+MODE="check"
+case "${1:-}" in
+  -h|--help)
+    sed -n '2,25p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+  --diff) MODE="diff" ;;
+  --sync) MODE="sync" ;;
+  "") MODE="check" ;;
+  *) echo "unknown option: $1 (use -h)"; exit 2 ;;
+esac
 
-# Temporary files for storing file lists
-TEMP_DIR=$(mktemp -d)
-CC65_FILES="$TEMP_DIR/cc65_files.txt"
-CC65_CLIB_FILES="$TEMP_DIR/cc65_clib_files.txt"
-COMMON_FILES="$TEMP_DIR/common_files.txt"
-ONLY_CC65="$TEMP_DIR/only_cc65.txt"
-ONLY_CC65_CLIB="$TEMP_DIR/only_cc65_clib.txt"
+[ -d "$SRC_DIR" ] || { echo "cc65 source not found: $SRC_DIR (set CC65_SRC)"; exit 1; }
+[ -d "$DST_DIR" ] || { echo "project source not found: $DST_DIR"; exit 1; }
 
-# Cleanup function
-cleanup() {
-    rm -rf "$TEMP_DIR"
-}
-trap cleanup EXIT
+# List of overlapping source files (paths relative to the bbc dir), excluding
+# the brk/ subdirs that only exist on the cc65 side.
+mapfile -t FILES < <(cd "$SRC_DIR" && find . -type f \
+  \( -name '*.s' -o -name '*.c' -o -name '*.inc' -o -name '*.h' \) \
+  -not -path './brk/*' | sort)
 
-# Function to print colored output
-print_header() {
-    echo -e "${BLUE}=== $1 ===${NC}"
-}
+diff_count=0
+synced=0
 
-print_diff() {
-    echo -e "${RED}$1${NC}"
-}
-
-print_only() {
-    echo -e "${GREEN}$1${NC}"
-}
-
-print_common() {
-    echo -e "${YELLOW}$1${NC}"
-}
-
-# Function to get relative file paths recursively
-get_file_list() {
-    local dir="$1"
-    local output="$2"
-    
-    if [[ -d "$dir" ]]; then
-        find "$dir" -type f | sed "s|^$dir/||" | sort > "$output"
-    else
-        touch "$output"
-    fi
+check_one() {  # <relpath> <src> <dst> <label>
+  local rel="$1" src="$2" dst="$3" label="$4"
+  if [ ! -f "$dst" ]; then
+    echo "  MISSING here: $label"; diff_count=$((diff_count+1)); return
+  fi
+  if ! diff -wq "$src" "$dst" >/dev/null 2>&1; then
+    diff_count=$((diff_count+1))
+    echo "  DIFFERS (functional): $label"
+    if [ "$MODE" = "diff" ]; then diff -u "$dst" "$src" || true; fi
+    if [ "$MODE" = "sync" ]; then cp "$src" "$dst"; synced=$((synced+1)); echo "    -> synced"; fi
+  fi
 }
 
-# Function to compare two files
-compare_files() {
-    local file1="$1"
-    local file2="$2"
-    
-    if [[ ! -f "$file1" ]]; then
-        return 1
-    fi
-    
-    if [[ ! -f "$file2" ]]; then
-        return 1
-    fi
-    
-    # Use diff to compare files, return 0 if identical, 1 if different
-    # We need to handle the exit code properly since diff returns 1 for different files
-    if diff -q "$file1" "$file2" >/dev/null 2>&1; then
-        return 0  # Files are identical
-    else
-        local diff_exit_code=$?
-        if [[ $diff_exit_code -eq 1 ]]; then
-            return 1  # Files are different
-        else
-            return 2  # Error occurred
-        fi
-    fi
-}
+echo "cc65 (canonical): $SRC_DIR"
+echo "project copy:     $DST_DIR"
+echo "Functional differences (whitespace ignored):"
 
-# Main comparison function
-main() {
-    print_header "Directory Comparison Analysis"
-    echo "Source: $CC65_DIR"
-    echo "Target: $CC65_CLIB_DIR"
-    echo
-    
-    # Check if directories exist
-    if [[ ! -d "$CC65_DIR" ]]; then
-        echo "Error: Source directory $CC65_DIR does not exist"
-        exit 1
-    fi
-    
-    if [[ ! -d "$CC65_CLIB_DIR" ]]; then
-        echo "Error: Target directory $CC65_CLIB_DIR does not exist"
-        exit 1
-    fi
-    
-    # Get file lists
-    print_header "Collecting file lists..."
-    get_file_list "$CC65_DIR" "$CC65_FILES"
-    get_file_list "$CC65_CLIB_DIR" "$CC65_CLIB_FILES"
-    
-    # Find common files
-    comm -12 "$CC65_FILES" "$CC65_CLIB_FILES" > "$COMMON_FILES"
-    
-    # Find files only in cc65
-    comm -23 "$CC65_FILES" "$CC65_CLIB_FILES" > "$ONLY_CC65"
-    
-    # Find files only in cc65-clib
-    comm -13 "$CC65_FILES" "$CC65_CLIB_FILES" > "$ONLY_CC65_CLIB"
-    
-    # Report statistics
-    local cc65_count=$(wc -l < "$CC65_FILES")
-    local cc65_clib_count=$(wc -l < "$CC65_CLIB_FILES")
-    local common_count=$(wc -l < "$COMMON_FILES")
-    local only_cc65_count=$(wc -l < "$ONLY_CC65")
-    local only_cc65_clib_count=$(wc -l < "$ONLY_CC65_CLIB")
-    
-    print_header "Summary Statistics"
-    echo "Files in cc65:           $cc65_count"
-    echo "Files in cc65-clib:      $cc65_clib_count"
-    echo "Common files:            $common_count"
-    echo "Only in cc65:            $only_cc65_count"
-    echo "Only in cc65-clib:       $only_cc65_clib_count"
-    echo
-    
-    # Report files only in cc65
-    if [[ $only_cc65_count -gt 0 ]]; then
-        print_header "Files only in cc65/libsrc/bbc/"
-        while IFS= read -r file; do
-            print_only "  + $file"
-        done < "$ONLY_CC65"
-        echo
-    fi
-    
-    # Report files only in cc65-clib
-    if [[ $only_cc65_clib_count -gt 0 ]]; then
-        print_header "Files only in cc65-clib/src/libsrc/bbc/"
-        while IFS= read -r file; do
-            print_only "  + $file"
-        done < "$ONLY_CC65_CLIB"
-        echo
-    fi
-    
-    # Compare common files
-    if [[ $common_count -gt 0 ]]; then
-        print_header "Comparing common files..."
-        local different_count=0
-        local identical_count=0
-        
-        while IFS= read -r file; do
-            local cc65_file="$CC65_DIR/$file"
-            local cc65_clib_file="$CC65_CLIB_DIR/$file"
-            
-            if compare_files "$cc65_file" "$cc65_clib_file"; then
-                ((++identical_count))
-            else
-                ((++different_count))
-                print_diff "  ≠ $file (different)"
-            fi
-        done < "$COMMON_FILES"
-        
-        echo
-        echo "Identical files: $identical_count"
-        echo "Different files: $different_count"
-        echo
-        
-        # Show detailed differences for different files
-        if [[ $different_count -gt 0 ]]; then
-            print_header "Detailed differences"
-            while IFS= read -r file; do
-                local cc65_file="$CC65_DIR/$file"
-                local cc65_clib_file="$CC65_CLIB_DIR/$file"
-                
-                if ! compare_files "$cc65_file" "$cc65_clib_file"; then
-                    echo
-                    print_common "File: $file"
-                    echo "--- cc65/libsrc/bbc/$file"
-                    echo "+++ cc65-clib/src/libsrc/bbc/$file"
-                    diff -u "$cc65_file" "$cc65_clib_file" || true
-                fi
-            done < "$COMMON_FILES"
-        fi
-    fi
-    
-    print_header "Analysis Complete"
-}
-
-# Parse command line arguments (basic implementation)
-while [[ $# -gt 0 ]]; do
-    case $1 in
-        -h|--help)
-            echo "Usage: $0 [options]"
-            echo
-            echo "Options:"
-            echo "  -s, --sync     Synchronize directories (copy missing/different files)"
-            echo "  -v, --verbose  Verbose output"
-            echo "  -h, --help     Show this help"
-            echo
-            echo "This script compares cc65/libsrc/bbc/ and cc65-clib/src/libsrc/bbc/ directories"
-            echo "and reports differences between them."
-            exit 0
-            ;;
-        -s|--sync)
-            echo "Sync functionality not yet implemented"
-            exit 1
-            ;;
-        -v|--verbose)
-            echo "Verbose mode not yet implemented"
-            exit 1
-            ;;
-        *)
-            echo "Unknown option: $1"
-            echo "Use -h or --help for usage information"
-            exit 1
-            ;;
-    esac
-    shift
+for rel in "${FILES[@]}"; do
+  check_one "$rel" "$SRC_DIR/$rel" "$DST_DIR/${rel#./}" "${rel#./}"
 done
 
-# Run main function
-main
+# Break handler (structural path difference) -> track cc65 brk/bbc-clib variant.
+if [ -f "$BRK_SRC" ]; then
+  check_one "break_handler_common.s" "$BRK_SRC" "$BRK_DST" "break_handler_common.s (<- brk/bbc-clib)"
+fi
+
+echo
+if [ "$MODE" = "sync" ]; then
+  echo "Synced $synced file(s). Re-run 'make -C src clean copy-cc65-artifacts' to"
+  echo "regenerate the ROM + metadata from the updated sources."
+elif [ "$diff_count" -eq 0 ]; then
+  echo "In sync (no functional differences)."
+else
+  echo "$diff_count functional difference(s). Run with --sync to copy cc65 -> here."
+fi
