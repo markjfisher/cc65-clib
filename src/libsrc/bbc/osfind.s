@@ -2,13 +2,13 @@
 ; unsigned char __fastcall__ osfind(unsigned char mode, const char *name);
 
 ; see https://central.kaserver5.org/Kasoft/Typeset/BBC/Ch43.html
-; 
+;
 ; Opens a file for writing or reading and writing. The routine is entered at &FFCE and indirects via &21C. The value in A determines the type of operation.
 
-; A=0	causes a file or files to be closed.
-; A=&40	causes a file to be opened for input (reading).
-; A=&80	causes a file to be opened for output (writing).
-; A=&C0	causes a file to be opened for input and output (random access).
+; A=0   causes a file or files to be closed.
+; A=&40 causes a file to be opened for input (reading).
+; A=&80 causes a file to be opened for output (writing).
+; A=&C0 causes a file to be opened for input and output (random access).
 ; If A=&40, &80 or &C0 then Y(high byte) and X(low byte) must contain the address of a location in memory which contains
 ; the file name terminated with CR (&0D).
 ; On exit Y will contain the channel number allocated to the file for all future operations.
@@ -38,9 +38,11 @@ _osfind:
         ; Call OSFIND
         jsr     OSFIND
 
-        ; OSFIND returns channel number in Y register
-        ; Return it in A (with X=0 for 16-bit return)
-        tya
+        ; OSFIND returns the file handle in A (0 if the open failed). The
+        ; earlier comment here claimed Y; that is wrong for the BBC MOS and
+        ; meant fopen()/open() received the name-pointer high byte as a bogus
+        ; non-zero handle, so every subsequent OSBGET/OSBPUT raised "Channel".
+        ; A already holds the handle; just clear the high byte of the return.
         ldx     #$00
 
         rts

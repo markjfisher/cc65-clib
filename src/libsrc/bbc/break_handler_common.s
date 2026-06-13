@@ -1,12 +1,15 @@
 ; break_handler_common.s
 ; Shared state & RAM brkhandler used by both prod/debug installers.
 
+; This version for bbc-clib ensures CLIB ROM is paged in before calling CLIB code or returning to C.
+
         .export  _disarm_brk_ret
         .export  brkhandler
         .export  bh_brkret, bh_rtsto, bh_olds, bh_oldbrkv, bh_installed
         .export  bh_mode, bh_dbg_entry
 
         .import  _exit
+        .import  clib_rom_slot
 
 ; Absolute vectors/regs:
 ROMSEL_CURRENT  := $F4
@@ -14,7 +17,6 @@ ROMSEL          := $FE30
 ERR_MSG_PTR     := $FD
 
 ESC_CODE        = $1B
-
 
         .bss
 bh_oldbrkv:   .res 2      ; saved BRKV (or debug chain target)
@@ -24,6 +26,13 @@ bh_olds:      .res 1      ; saved hardware S at set_brk_ret* time
 bh_installed: .res 1      ; 0/1: whether we've installed our handler into BRKV
 
         .code
+
+; --- helper: select CLIB ROM bank (clobbers A) ---
+select_clib:
+        lda     clib_rom_slot
+        sta     ROMSEL_CURRENT
+        sta     ROMSEL
+        rts
 
 _disarm_brk_ret:
         php
@@ -37,8 +46,7 @@ _disarm_brk_ret:
         plp
         rts
 
-
-; RAM BRK handler
+; --- RAM BRK handler (ROM-aware) ---
 brkhandler:
         php
         sei
@@ -59,7 +67,7 @@ brkhandler:
         ora     bh_brkret+1
         beq     @pass
 
-        ; ---- armed return path ----
+        ; ---- armed path ----
         ; disarm
         lda     #0
         sta     bh_brkret
@@ -68,21 +76,23 @@ brkhandler:
         sta     bh_dbg_entry+1
         sta     bh_mode
 
-        ; restore hardware S saved at set_brk_ret* time
+        ; ensure CLIB ROM is selected before we resume C
+        jsr     select_clib
+
+        ; restore S saved at arm time
         ldx     bh_olds
         ; we need to discard 1 return address left on the stack, so just increment X by 2 before setting it to SP
         inx
         inx
         txs
 
-        ; push saved return address so RTS returns to C site
+        ; craft return
         lda     bh_rtsto+1
         pha
         lda     bh_rtsto
         pha
 
-        ; we changed S — the entry-saved A/X/Y and P are on the old stack,
-        ; so DON'T try to pop them. Just return A=1.
+        ; return with A=1; cannot plp because we swapped stacks
         cli
         lda     #1
         rts
