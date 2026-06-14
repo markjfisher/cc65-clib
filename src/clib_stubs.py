@@ -206,24 +206,19 @@ def main():
     
     input_file = sys.argv[1]
     output_file = sys.argv[2]
-    
-    # Optional VICE symbol file paths
-    if len(sys.argv) >= 4:
-        clib_lbl_file = sys.argv[3]
-        mos_lbl_file = sys.argv[4] if len(sys.argv) == 5 else sys.argv[3].replace('clib.lbl', 'clib-mos.lbl')
-    else:
-        # Generate default VICE file names in build directory
-        import os
-        base_dir = os.path.dirname(output_file)
-        if not base_dir:
-            base_dir = '../build'
-        clib_lbl_file = os.path.join(base_dir, 'clib.lbl')
-        mos_lbl_file = os.path.join(base_dir, 'clib-mos.lbl')
-    
+
     parser = MapParser()
     parser.parse_map_file(input_file)
     parser.generate_stubs_file(output_file)
-    parser.generate_vice_symbol_files(clib_lbl_file, mos_lbl_file)
+
+    # Only generate VICE symbol files when their paths are given explicitly.
+    # (Previously, with just 2 args, they were written next to the stubs as a
+    # side-effect, leaving duplicate clib.lbl/clib-mos.lbl in the OUT dir.)
+    if len(sys.argv) >= 4:
+        clib_lbl_file = sys.argv[3]
+        mos_lbl_file = (sys.argv[4] if len(sys.argv) == 5
+                        else sys.argv[3].replace('clib.lbl', 'clib-mos.lbl'))
+        parser.generate_vice_symbol_files(clib_lbl_file, mos_lbl_file)
 
 
 if __name__ == "__main__":

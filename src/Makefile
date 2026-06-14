@@ -1,3 +1,8 @@
+# Output tree (all under BUILD; cleaned as a unit):
+#   BUILD  final deliverables  - clib.rom, clib.lib, clib.map, clib.lbl
+#   WRK    object work area    - compiled .o/.s/.info + build stamps
+#   OUT    generated metadata  - clib_imports*.inc, *.lst, *.manifest,
+#                                inc_objs.mk, clib_stubs.s/.o (copied into cc65)
 BUILD := ../build
 WRK   := $(BUILD)/libwrk
 OUT   := $(BUILD)/out
@@ -52,6 +57,11 @@ CLIB_INCS = $(CLIB_RTIMPORT) $(CLIB_RTJUMPS) $(CLIB_OBJS_LST) $(CLIB_STUBS_LST)
 
 .PHONY: all clean generate copy-cc65-artifacts rom lib jumptable-check
 
+# 'all' is the default goal. (Without this, the first file-target rule above -
+# the rom_functions.manifest rule - would become the default and a bare 'make'
+# would stop after generating manifests, never linking the ROM.)
+.DEFAULT_GOAL := all
+
 # --------------------------------------------------------------------
 # Top-levels
 # --------------------------------------------------------------------
@@ -78,12 +88,7 @@ rom: $(BUILD)/clib.rom
 lib: $(BUILD)/clib.lib
 
 clean:
-	-rm -r $(WRK) 2>/dev/null
-	-rm $(BUILD)/clib.rom 2>/dev/null
-	-rm $(BUILD)/clib.lib 2>/dev/null
-	-rm $(BUILD)/clib.map 2>/dev/null
-	-rm $(BUILD)/clib.lbl 2>/dev/null
-	-rm $(BUILD)/clib-mos.lbl 2>/dev/null
+	rm -rf $(BUILD)
 
 # Directory targets
 $(BUILD):
