@@ -24,4 +24,4 @@ clean:
 
 # Full rebuild: ROM + cc65 libraries + all tests
 test:
-	./run_tests.sh
+	bash scripts/run_tests.sh

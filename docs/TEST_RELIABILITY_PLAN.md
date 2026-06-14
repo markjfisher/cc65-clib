@@ -9,9 +9,9 @@ flaky for `bbc-clib` when the larger (jump-table) CLIB ROM is in use.
 - Project: `/home/markf/dev/bbc/cc65-clib` (this repo, formerly test-cc65-clib).
 - Two test tiers:
   - **Unit** (`tests/unit/`, soft65c02): fast, reliable, NOT affected by this
-    task. Run: `./run_unit_tests.sh`.
-  - **Integration** (`tests/integration/scripted/`, beebium + pytest): the flaky
-    ones. Run: `./run_integration_tests.sh` (auto-detects server/ROMs, builds
+task. Run: `bash scripts/run_unit_tests.sh`.
+-   **Integration** (`tests/integration/scripted/`, beebium + pytest): the flaky
+    ones. Run: `bash scripts/run_integration_tests.sh` (auto-detects server/ROMs, builds
     discs, runs pytest).
 - Integration harness: `tests/integration/scripted/clib_harness.py`
   (launch/boot/screen helpers) and `tests/integration/scripted/conftest.py`
@@ -67,7 +67,7 @@ flaky for `bbc-clib` when the larger (jump-table) CLIB ROM is in use.
 ## First step: diagnose the actual resource
 
 Before changing anything, confirm what accumulates across launches. During a
-full `./run_integration_tests.sh` (or a loop of bbc-clib tests), watch:
+full `bash scripts/run_integration_tests.sh` (or a loop of bbc-clib tests), watch:
 
 - `ps -ef | grep beebium-model-b` — are server processes orphaned (not reaped)?
 - open file descriptors of the pytest process (`ls /proc/<pid>/fd | wc -l`).
@@ -128,7 +128,7 @@ against it:
 ```
 ( cd ../cc65-clib && git checkout jumptable-prototype )
 make -C build-rom all          # builds CLIB ROM + cc65 bbc/bbc-clib libs, copies to roms/ and cc65
-./run_integration_tests.sh     # builds dual-mode discs + runs pytest
+bash scripts/run_integration_tests.sh     # builds dual-mode discs + runs pytest
 ```
 
 `roms/clib.rom` should be 16384 bytes. Background on the ROM / vectoring is in
@@ -146,10 +146,10 @@ make -C build-rom all          # builds CLIB ROM + cc65 bbc/bbc-clib libs, copie
 
 ## Definition of done
 
-- `./run_integration_tests.sh` passes (24 passed, 1 skipped) on at least 3
+- `bash scripts/run_integration_tests.sh` passes (24 passed, 1 skipped) on at least 3
   consecutive runs with the `jumptable-prototype` 16 KB ROM, with no flaky
   `[bbc-clib]` failures.
 - The fix is in the harness/runner only (no emulator-timing hacks that mask a
   leak); document what the accumulating resource was and how the fix addresses
   it.
-- `./run_unit_tests.sh` still green; `bbc`-mode integration still green.
+- `bash scripts/run_unit_tests.sh` still green; `bbc`-mode integration still green.

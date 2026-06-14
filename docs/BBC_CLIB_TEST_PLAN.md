@@ -303,7 +303,7 @@ Notes for later:
 - New `test_rom_swap.py`: proves a bbc-clib program errors with
   "cc65 CLIB ROM not found" WITHOUT the ROM and runs to completion WITH it
   (Q3) — i.e. it genuinely uses the ROM, not a local copy.
-- `run_integration_tests.sh` now ensures the cc65 libs + CLIB ROM exist (builds
+- `scripts/run_integration_tests.sh` now ensures the cc65 libs + CLIB ROM exist (builds
   via `make -C build-rom all` if missing, or `REBUILD_ROM=1` to force) before
   building discs.
 - **Result: 24 passed, 1 skipped** (the intentional MODE-0 graphics reader);
@@ -328,16 +328,16 @@ Notes for later:
   so it is optional (no more hardcoded `$HOME/dev/bbc/roms`, no `rm /clib*`).
 - `build.sh`: stripped of the retired per-test/JSON logic; now a thin wrapper
   over `build-rom` (`build.sh` / `build.sh -r`).
-- `run_tests.sh`: the single validate-everything entry point — full ROM + both
+- `scripts/run_tests.sh`: the single validate-everything entry point — full ROM + both
   cc65 libs by default, `--quick` (libs only), `--no-beebium`.
-- `run_unit_tests.sh`: adds `~/.cargo/bin` / `~/.local/bin` to PATH so
+- `scripts/run_unit_tests.sh`: adds `~/.cargo/bin` / `~/.local/bin` to PATH so
   `soft65c02_unit` is found from a bare environment.
 - `cc65-clib/compare-cc65.sh`: rewritten into a working, de-hardcoded
   check/sync tool (`--check` default, `--diff`, `--sync`); ignores whitespace,
   handles the flat-vs-brk/bbc-clib break-handler mapping. Currently reports
   "in sync".
 - Verified: `./build.sh` rebuilds the ROM and skips the (unset) emulator copy;
-  ROM regeneration is deterministic (cc65 tree unchanged); `run_tests.sh
+  ROM regeneration is deterministic (cc65 tree unchanged); `scripts/run_tests.sh
   --quick` runs all 362 unit assertions green.
 
 ### Phase 5 (jump-table / vectoring) — DESIGNED + PROTOTYPED, NOT ADOPTED

@@ -1,7 +1,7 @@
 #!/bin/bash
 # Run the beebium integration tests.
 #
-# Usage: ./run_integration_tests.sh [pytest_args...]
+# Usage: bash scripts/run_integration_tests.sh [pytest_args...]
 #
 # Environment variables:
 #   BEEBIUM_SERVER     Path to beebium-model-b executable
@@ -22,7 +22,8 @@
 # Skips gracefully if dependencies not met, with a clear message.
 
 set -euo pipefail
-cd "$(dirname "$0")"
+ROOT=$(cd "$(dirname "$0")/.." && pwd)
+cd "$ROOT"
 
 VENV_DIR="${BEEBIUM_VENV:-.venv}"
 BEEBIUM_ROM_DIR="${BEEBIUM_ROM_DIR:-}"

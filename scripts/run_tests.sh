@@ -6,15 +6,16 @@
 # tests.
 #
 # Usage:
-#   ./run_tests.sh                # ROM + both cc65 libs, unit + integration
-#   ./run_tests.sh --quick        # cc65 libs only (no ROM regen), faster
-#   ./run_tests.sh --no-beebium   # build + unit tests only
+#   bash scripts/run_tests.sh               # ROM + both cc65 libs, unit + integration
+#   bash scripts/run_tests.sh --quick       # cc65 libs only (no ROM regen), faster
+#   bash scripts/run_tests.sh --no-beebium  # build + unit tests only
 #
 # Path overrides honoured by build-rom/Makefile: CC65_ROOT, CLIB_ROOT,
 # TARGET_ROM_COPY (see build-rom/Makefile).
 
 set -euo pipefail
-cd "$(dirname "$0")"
+ROOT=$(cd "$(dirname "$0")/.." && pwd)
+cd "$ROOT"
 
 RUN_BEEBIUM=1
 QUICK=0
@@ -41,14 +42,14 @@ echo
 echo "############################################################"
 echo "# 2/3  Unit tests (soft65c02)"
 echo "############################################################"
-./run_unit_tests.sh
+bash scripts/run_unit_tests.sh
 
 if [ "$RUN_BEEBIUM" = "1" ]; then
   echo
   echo "############################################################"
   echo "# 3/3  Beebium integration tests (bbc + bbc-clib)"
   echo "############################################################"
-  ./run_integration_tests.sh
+  bash scripts/run_integration_tests.sh
 else
   echo
   echo "(skipping beebium: --no-beebium)"

@@ -1,14 +1,15 @@
 #!/bin/bash
 # Run the soft65c02 unit tests against a built cc65 bbc library.
 #
-# Usage: ./run_unit_tests.sh [test_name_pattern]
+# Usage: bash scripts/run_unit_tests.sh [test_name_pattern]
 #   (default: all unit tests under tests/unit/)
 #
 # The harness builds a small test binary linked against the compiled cc65 bbc
 # library, then soft65c02_unit executes the test DSL to verify register/memory state.
 
 set -euo pipefail
-cd "$(dirname "$0")"
+ROOT=$(cd "$(dirname "$0")/.." && pwd)
+cd "$ROOT"
 
 # soft65c02_unit is typically a cargo-installed binary; make sure the usual
 # install locations are on PATH so the runner works from a bare environment.
@@ -20,7 +21,7 @@ if ! command -v soft65c02_unit >/dev/null 2>&1; then
   exit 0
 fi
 
-. ./test_env.sh
+. scripts/test_env.sh
 
 PATTERN="${1:-*}"
 

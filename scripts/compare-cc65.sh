@@ -21,9 +21,10 @@
 set -euo pipefail
 
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
-CC65_SRC="${CC65_SRC:-$SCRIPT_DIR/../cc65}"
+PROJECT_ROOT=$(cd "$SCRIPT_DIR/.." && pwd)
+CC65_SRC="${CC65_SRC:-$PROJECT_ROOT/../cc65}"
 SRC_DIR="$CC65_SRC/libsrc/bbc"                 # canonical
-DST_DIR="$SCRIPT_DIR/src/libsrc/bbc"           # this project's copy
+DST_DIR="$PROJECT_ROOT/src/libsrc/bbc"           # this project's copy
 # The flat break handler here tracks cc65's ROM-aware variant:
 BRK_SRC="$SRC_DIR/brk/bbc-clib/break_handler_common.s"
 BRK_DST="$DST_DIR/break_handler_common.s"

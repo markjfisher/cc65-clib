@@ -1,7 +1,7 @@
 # Manual / hardware-dependent tests
 
-These are **not** part of the automated suites (`./run_unit_tests.sh`,
-`./run_integration_tests.sh`). They require human interaction and/or real
+These are **not** part of the automated suites (`bash scripts/run_unit_tests.sh`,
+`bash scripts/run_integration_tests.sh`). They require human interaction and/or real
 hardware and are kept for reference and occasional manual use.
 
 ## serial-fujinet/

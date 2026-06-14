@@ -30,16 +30,18 @@ repository has since undergone an extensive rewrite and is now detached.
 │   └── manual/                   # Hardware-dependent manual tests
 ├── debug/jumptable/              # Jump-table debug bundle
 ├── docs/                         # Design & planning documents
-├── scripts/                      # create_ssd.py (disc image builder)
+├── scripts/                      # Shell scripts + create_ssd.py
+│   ├── run_tests.sh
+│   ├── run_unit_tests.sh
+│   ├── run_integration_tests.sh
+│   ├── test_env.sh
+│   ├── compare-cc65.sh
+│   └── create_ssd.py
 ├── build/                        # Output: ROM, libs, test discs
 ├── roms/                         # Built ROM images (copied from build/)
 ├── .venv/                        # Python venv (beebium, pytest, grpcio)
-├── compare-cc65.sh               # Source sync with cc65 fork
-├── Makefile                      # Root: delegates to src/
-├── run_tests.sh                  # Full test matrix
-├── run_unit_tests.sh             # Unit tests only
-├── run_integration_tests.sh      # Integration tests only
-└── test_env.sh                   # Env vars for soft65c02
+├── Makefile                      # Root: delegates to src/ and scripts/
+└── README.md
 ```
 
 ## Prerequisites
@@ -131,13 +133,13 @@ end-to-end rebuild: cleans and rebuilds the ROM in `src/`, copies it to
 
 ```bash
 # Full matrix: build + unit tests + integration tests
-./run_tests.sh
-./run_tests.sh --no-beebium   # skip the slower emulator-based tests
-./run_tests.sh --quick        # skip ROM rebuild (cc65 libs only)
+bash scripts/run_tests.sh
+bash scripts/run_tests.sh --no-beebium   # skip the slower emulator-based tests
+bash scripts/run_tests.sh --quick        # skip ROM rebuild (cc65 libs only)
 
 # Individual suites
-./run_unit_tests.sh             # 54 soft65c02 unit tests (fast, no emulator)
-./run_integration_tests.sh      # 24 dual-mode beebium tests (~3 min)
+bash scripts/run_unit_tests.sh           # 54 soft65c02 unit tests (fast, no emulator)
+bash scripts/run_integration_tests.sh    # 24 dual-mode beebium tests (~3 min)
 
 # Or just the bbc-clib subset
 pytest tests/integration/scripted/ -k "bbc-clib or rom_swap"
@@ -163,18 +165,18 @@ Prerequisites (auto-detected, skipped with a clear message if missing):
 ## Keeping sources in sync with cc65
 
 The `src/libsrc/bbc/` directory is a copy of the bbc library sources from the
-cc65 fork. The `compare-cc65.sh` script checks for functional differences
+cc65 fork. The `scripts/compare-cc65.sh` script checks for functional differences
 (ignoring whitespace) and can sync changes from cc65:
 
 ```bash
 # Check for differences
-./compare-cc65.sh
+bash scripts/compare-cc65.sh
 
 # Show unified diffs
-./compare-cc65.sh --diff
+bash scripts/compare-cc65.sh --diff
 
 # Copy cc65 sources here (overwrites)
-./compare-cc65.sh --sync
+bash scripts/compare-cc65.sh --sync
 ```
 
 After syncing, re-run the build: `make -C src clean copy-cc65-artifacts`.
