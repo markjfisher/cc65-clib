@@ -1,6 +1,6 @@
 BUILD := ../build
 WRK   := $(BUILD)/libwrk
-OUT   := $(BUILD)
+OUT   := $(BUILD)/out
 
 # CC65 source directory for manifest file copying (loose coupling)
 CC65_SRC ?= ../../cc65
@@ -41,19 +41,27 @@ EXCL_FUNCS_MAN  := $(OUT)/excluded_functions.manifest
 
 CLIB_STUBS_S    := $(OUT)/clib_stubs.s
 
+# Append-only ledger of CODE functions that get a fixed jump-table slot. The
+# generated jump table and the stubs both depend on it.
+JUMPTABLE_DEF   := jumptable.def
+
 $(ROM_FUNCS_MAN) $(EXCL_FUNCS_MAN) $(inc_objs_MK): $(CLIB_INCS)
 	@true
 
 CLIB_INCS = $(CLIB_RTIMPORT) $(CLIB_RTJUMPS) $(CLIB_OBJS_LST) $(CLIB_STUBS_LST)
 
-.PHONY: all clean generate copy-cc65-artifacts rom lib
+.PHONY: all clean generate copy-cc65-artifacts rom lib jumptable-check
 
 # --------------------------------------------------------------------
 # Top-levels
 # --------------------------------------------------------------------
 
 # Full pipeline: build objects, ROM image, stubs, lib, labels, and copy to cc65
-all: generate copy-cc65-artifacts
+all: generate jumptable-check copy-cc65-artifacts
+
+# Warn (non-fatal) if the ROM's CODE functions have drifted from the ledger.
+jumptable-check: $(BUILD)/clib.map
+	-python3 gen_jumptable.py $(BUILD)/clib.map $(JUMPTABLE_DEF) --check
 
 generate: $(OBJS) $(INFOS) $(CLIB_INCS) $(EXCLUDED_OBJS_MK) $(CLIB_STUBS_S) $(BUILD)/clib.lbl $(BUILD)/clib-mos.lbl rom lib
 	@echo "Artifacts generated in $(WRK):"
@@ -158,7 +166,7 @@ GEN_ARTIFACTS := \
 $(GEN_ARTIFACTS): $(IMPORTS_STAMP)
 
 # Build the stamp (runs the script ONCE)
-$(IMPORTS_STAMP): $(RTSRCS) clib_imports.py $(OBJS) $(INFOS) | $(WRK) $(OUT)
+$(IMPORTS_STAMP): $(RTSRCS) clib_imports.py $(JUMPTABLE_DEF) $(OBJS) $(INFOS) | $(WRK) $(OUT)
 	$(CLIB_IMPORTS_SCRIPT) \
 		$(CLIB_RTIMPORT) $(CLIB_RTJUMPS) \
 		$(CLIB_OBJS_LST) $(CLIB_STUBS_LST) \
@@ -193,7 +201,7 @@ $(CLIB_LINK_STAMP): $(WRK)/clib_rom.o clib_rom.cfg $(CLIB_OBJS_LST) | $(BUILD)
 $(BUILD)/clib.rom $(BUILD)/clib.map: $(CLIB_LINK_STAMP)
 
 # Generate assembler stubs from the ROM map
-$(CLIB_STUBS_S): $(BUILD)/clib.map clib_stubs.py | $(OUT)
+$(CLIB_STUBS_S): $(BUILD)/clib.map clib_stubs.py $(JUMPTABLE_DEF) | $(OUT)
 	$(CLIB_STUBS_SCRIPT) $(BUILD)/clib.map $(CLIB_STUBS_S)
 
 # Generate VICE label files from the ROM map

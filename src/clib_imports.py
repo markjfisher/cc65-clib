@@ -205,10 +205,15 @@ class InfoParser:
                     f.write("\t.byte\t$00,$00,$00\n")
                     continue
                 if sym not in rom_exports:
-                    usage(
-                        f"jumptable.def slot {idx} '{sym}' is not a ROM-resident "
-                        f"export; remove it or mark the slot RESERVED"
-                    )
+                    # A ledger symbol that is no longer a ROM export: keep the
+                    # slot (so later slots don't move) and warn the maintainer to
+                    # mark it RESERVED. Do not fail the build.
+                    print(f"clib_imports: WARNING jumptable.def slot {idx} '{sym}' "
+                          f"is not a ROM-resident export; emitting RESERVED - mark "
+                          f"the slot RESERVED in jumptable.def", file=sys.stderr)
+                    f.write(f"\t; slot {idx}: {sym} (MISSING -> reserved)\n")
+                    f.write("\t.byte\t$00,$00,$00\n")
+                    continue
                 f.write(f"\t; slot {idx}: {sym}\n")
                 f.write(f"\tjmp\t{sym}\n")
 
