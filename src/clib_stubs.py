@@ -8,7 +8,33 @@ Usage: clib_stubs.py <rom_map.map> <output.s>
 
 import sys
 import re
-from typing import Dict, NamedTuple
+import os
+from typing import Dict, List, NamedTuple
+
+
+# Jump-table ABI contract, shared with clib_imports.py and clib_rom.cfg's JUMP_M.
+JUMPTABLE_BASE = 0x8100
+JUMPTABLE_SLOT_SIZE = 3
+
+
+def read_vectored_symbols() -> Dict[str, int]:
+    """Map vectored symbol -> fixed jump-table address, from jumptable.def
+    (slot index * SLOT_SIZE + BASE). Application calls to these symbols go
+    through the stable table slot rather than the relocatable function body."""
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "jumptable.def")
+    vectored: Dict[str, int] = {}
+    if not os.path.exists(path):
+        return vectored
+    with open(path, 'r') as f:
+        idx = 0
+        for line in f:
+            line = line.split('#', 1)[0].strip()
+            if not line:
+                continue
+            if line != "RESERVED":
+                vectored[line] = JUMPTABLE_BASE + idx * JUMPTABLE_SLOT_SIZE
+            idx += 1
+    return vectored
 
 
 def usage(msg: str):
@@ -95,8 +121,12 @@ class MapParser:
     
     def generate_stubs_file(self, output_file: str) -> None:
         """Generate the assembler stubs file."""
+        vectored = read_vectored_symbols()
         try:
             with open(output_file, 'w') as f:
+                if vectored:
+                    f.write(f"\t\t; {len(vectored)} symbol(s) vectored through the "
+                            f"fixed jump table at ${JUMPTABLE_BASE:04X}\n")
                 for symbol_name in sorted(self.symbols.keys()):
                     symbol = self.symbols[symbol_name]
                     
@@ -105,6 +135,15 @@ class MapParser:
                         f.write(f"\t\t; skipping symbol {symbol.name}\n")
                         continue
                     
+                    # Vectored functions resolve to their stable jump-table slot
+                    # (not the relocatable ROM body), so app binaries survive
+                    # ROM rebuilds.
+                    if symbol.name in vectored:
+                        addr = f"{vectored[symbol.name]:04X}"
+                        f.write(f"\t\t.export\t{symbol.name}\t; vectored\n")
+                        f.write(f"{symbol.name}\t\t:=\t${addr}\n")
+                        continue
+
                     if symbol.symbol_type == 'Z':
                         # Zeropage symbol
                         f.write(f"\t\t.exportZP\t{symbol.name}\n")

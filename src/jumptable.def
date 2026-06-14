@@ -1,0 +1,42 @@
+# CLIB ROM jump-table definition (vectoring layer).
+#
+# Each non-comment, non-blank line names a ROM-resident public FUNCTION symbol
+# that is exposed to applications through a fixed-address JMP slot in the ROM
+# (segment JUMPTABLE, base $8100, 3 bytes per slot). Applications call the slot,
+# which JMPs to the real (relocatable) function body, so the ROM code can move
+# between builds without breaking already-linked application binaries.
+#
+# RULES (critical for binary compatibility):
+#   * Order = slot index and is PERMANENT. Append new functions at the END only.
+#   * NEVER reorder or delete a line. To retire a slot, replace the symbol with
+#     the keyword RESERVED (keeps every later slot at its fixed address).
+#   * Only list real functions (JMP targets), never data symbols.
+#   * Every listed symbol must be ROM-resident (the generator errors otherwise).
+#
+# Slot 0 is the first line below.
+
+_abs
+_labs
+_atoi
+_atol
+_itoa
+_ltoa
+_memcmp
+_memcpy
+_memmove
+_memset
+_strcat
+_strchr
+_strcmp
+_strcpy
+_strcspn
+_strlen
+_strncat
+_strncmp
+_strncpy
+_strpbrk
+_strrchr
+_strspn
+_strstr
+_tolower
+_toupper
