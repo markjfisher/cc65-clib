@@ -1,0 +1,10 @@
+name: systime - OSWORD 14 decoding
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+src_files:
+  - test_systime.c
+ld_flags:
+  - -t
+  - bbc
+test_script: test_systime.txt

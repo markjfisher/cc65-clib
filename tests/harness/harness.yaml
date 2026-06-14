@@ -11,6 +11,7 @@ src_files:
   - ./src/print_mock.s
   - ./src/mos_vectors.s
   - ./src/stubs.s
+  - ./src/osword_stub.s
   - ./src/file_mock.s
 
 # will allow inc files from the root path, was tied into older hello.inc

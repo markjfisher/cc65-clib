@@ -1,0 +1,10 @@
+name: dir - opendir/closedir pool semantics
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+src_files:
+  - test_dir_ops.c
+ld_flags:
+  - -t
+  - bbc
+test_script: test_dir_ops.txt

@@ -13,6 +13,7 @@
 .import h_osbget_entry
 .import h_osbput_entry
 .import h_osargs_entry
+.import h_osword_entry
 
 osrdrm_vector:  jmp h_unknown_entry
                 jmp h_unknown_entry
@@ -34,6 +35,6 @@ osnewl_vector:  lda #$0a
                 jsr oswrch_vector
                 lda #$0d
 oswrch_vector:  jmp h_oswrch_entry
-osword_vector:  jmp h_unknown_entry
+osword_vector:  jmp h_osword_entry
 osbyte_vector:  jmp h_osbyte_entry
 oscli_vector:   jmp h_unknown_entry

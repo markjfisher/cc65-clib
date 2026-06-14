@@ -17,8 +17,14 @@ assert CP = $end_init_harness $$completed correctly$$
 
 assert $_test_result = 0x01      $$open() succeeded$$
 assert $_test_result + 1 = 0x02  $$lseek(SEEK_SET,2) returned 2$$
-assert $_test_result + 2 = 0x43  $$read after seek = 'C'$$
-assert $_test_result + 3 = 0x00  $$lseek(SEEK_SET,0) returned 0$$
-assert $_test_result + 4 = 0x41  $$read after rewind = 'A'$$
-assert $_test_result + 5 = 0x05  $$lseek(SEEK_END) returned 5 (length)$$
-assert $_test_result + 6 = 0x01  $$completed$$
+assert $_test_result + 2 = 0x03  $$lseek(SEEK_CUR,+1) used pending seek$$
+assert $_test_result + 3 = 0x44  $$read after pending seek = 'D'$$
+assert $_test_result + 4 = 0x04  $$mock file pointer advanced to 4$$
+assert $_test_result + 5 = 0x03  $$lseek(SEEK_CUR,-1) used actual file ptr$$
+assert $_test_result + 6 = 0x44  $$read after backstep = 'D'$$
+assert $_test_result + 7 = 0x04  $$lseek(SEEK_END,-1) returned 4$$
+assert $_test_result + 8 = 0xFF  $$lseek past BOF returned -1$$
+assert $_test_result + 9 = 0x07  $$errno = EINVAL$$
+assert $_test_result + 10 = 0x00 $$lseek(SEEK_SET,0) returned 0$$
+assert $_test_result + 11 = 0x41 $$read after rewind = 'A'$$
+assert $_test_result + 12 = 0x01 $$completed$$

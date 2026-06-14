@@ -26,6 +26,7 @@
         .export h_osbput_entry
         .export h_osargs_entry
         .export file_mock_eof_status
+        .importzp ptr1
 
         .segment "CODE"
 
@@ -36,6 +37,9 @@ FILE_OPEN  = $0A02
 FILE_HVAR  = $0A03
 
 fm_tmp     = $0A04          ; scratch (not in cc65 / MOS ZP)
+LAST_OPEN_MODE = $0A10
+LAST_OPEN_PTR  = $0A11
+LAST_OPEN_NAME = $0A20
 
 ; ---------------------------------------------------------------------------
 ; OSFIND — A selects the operation; X/Y point at a CR-terminated name (open).
@@ -43,8 +47,28 @@ fm_tmp     = $0A04          ; scratch (not in cc65 / MOS ZP)
 ;   On exit A = handle (0 = open failed / not found).
 ; ---------------------------------------------------------------------------
 h_osfind_entry:
+        sta     LAST_OPEN_MODE
         cmp     #$00
         beq     @close
+
+        stx     LAST_OPEN_PTR
+        sty     LAST_OPEN_PTR+1
+        stx     ptr1
+        sty     ptr1+1
+        ldy     #$00
+@copy_name:
+        lda     (ptr1),y
+        sta     LAST_OPEN_NAME,y
+        cmp     #$0D
+        beq     @dispatch
+        iny
+        cpy     #127
+        bcc     @copy_name
+        lda     #$0D
+        sta     LAST_OPEN_NAME+127
+
+@dispatch:
+        lda     LAST_OPEN_MODE
         cmp     #$80
         beq     @output
         cmp     #$C0

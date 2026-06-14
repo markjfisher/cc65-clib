@@ -35,7 +35,6 @@ repository has since undergone an extensive rewrite and is now detached.
 │   ├── run_unit_tests.sh
 │   ├── run_integration_tests.sh
 │   ├── test_env.sh
-│   ├── compare-cc65.sh
 │   └── create_ssd.py
 ├── build/                        # Output: ROM, libs, test discs
 ├── roms/                         # Built ROM images (copied from build/)

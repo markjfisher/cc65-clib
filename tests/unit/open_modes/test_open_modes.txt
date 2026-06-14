@@ -1,0 +1,24 @@
+////////////////////////////////
+marker $$ open modes test $$
+////////////////////////////////
+
+memory load atari "${BINARY_PATH}"
+symbols load "${SYMBOLS_PATH}"
+
+; File mock: opens succeed and hand back channel $11.
+memory write #0x0A03 0x(11)
+
+registers flush
+
+run $init_harness until (CP = $end_init_harness OR cycle_count > 20000)
+assert CP = $end_init_harness $$completed correctly$$
+
+assert $_test_result = 0x40      $$O_RDONLY mapped to OSFIND input$$
+assert $_test_result + 1 = 0x01  $$read-only open succeeded$$
+assert $_test_result + 2 = 0x80  $$O_WRONLY mapped to OSFIND output$$
+assert $_test_result + 3 = 0x01  $$write-only open succeeded$$
+assert $_test_result + 4 = 0xC0  $$O_RDWR mapped to OSFIND update$$
+assert $_test_result + 5 = 0x01  $$read/write open succeeded$$
+assert #0x0A20 = 0x41            $$copied filename begins with 'A'$$
+assert $_test_result + 6 = 0x41  $$byte 126 preserved before terminator$$
+assert $_test_result + 7 = 0x0D  $$byte 127 rewritten to CR terminator$$

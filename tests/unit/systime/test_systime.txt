@@ -1,0 +1,20 @@
+////////////////////////////////
+marker $$ systime test $$
+////////////////////////////////
+
+memory load atari "${BINARY_PATH}"
+symbols load "${SYMBOLS_PATH}"
+registers flush
+
+run $init_harness until (CP = $end_init_harness OR cycle_count > 500000)
+assert CP = $end_init_harness $$completed correctly$$
+
+assert $_test_result = 0xA5      $$2069 case byte 0$$
+assert $_test_result + 1 = 0x5C  $$2069 case byte 1$$
+assert $_test_result + 2 = 0x39  $$2069 case byte 2$$
+assert $_test_result + 3 = 0xBA  $$2069 case byte 3$$
+assert $_test_result + 4 = 0x61  $$1975/current-seconds case byte 0$$
+assert $_test_result + 5 = 0x86  $$1975/current-seconds case byte 1$$
+assert $_test_result + 6 = 0x48  $$1975/current-seconds case byte 2$$
+assert $_test_result + 7 = 0x0B  $$1975/current-seconds case byte 3$$
+assert $_test_result + 8 = 0x01  $$completed$$

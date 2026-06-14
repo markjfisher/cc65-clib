@@ -3,7 +3,7 @@ name: lseek — end-to-end seek through the file mock
 configs:
   - ${HARNESS_DIR}/harness.yaml
 src_files:
-  - test_file_seek.c
+  - test_file_seek.s
 ld_flags:
   - -t
   - bbc

@@ -1,0 +1,10 @@
+name: open - mode mapping and filename copy
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+src_files:
+  - test_open_modes.c
+ld_flags:
+  - -t
+  - bbc
+test_script: test_open_modes.txt
