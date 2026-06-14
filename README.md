@@ -17,7 +17,7 @@ repository has since undergone an extensive rewrite and is now detached.
 │   ├── clib_rom.s / clib_rom.cfg
 │   ├── clib_imports.py / clib_stubs.py / gen_jumptable.py / resolve_objs.py
 │   ├── jumptable.def
-│   └── libsrc/{runtime,common,bbc}/
+│   └── libsrc/bbc-clib/          # Overlay: break_handler_common.s + excluded list
 ├── build-rom/                    # Orchestrates ROM + cc65 lib rebuild
 ├── tests/                        # Test suites (unit + integration)
 │   ├── unit/                     # soft65c02 unit tests (54 test dirs)
@@ -49,6 +49,9 @@ repository has since undergone an extensive rewrite and is now detached.
 - **cc65 toolchain** (`ca65`, `cc65`, `ld65`, `ar65`, `od65`) — must be on
   `PATH`. Built from the cc65 fork at
   [github.com/markf256/cc65](https://github.com/markf256/cc65).
+- **cc65 source tree** at `../cc65` (or set `CC65_SRC`).  The build compiles
+  directly from the canonical cc65 `libsrc/{bbc,common,runtime}` trees; it
+  does not maintain a local copy.
 - **Python 3.6+** (stdlib only; no pip packages required).
 
 ## Building
@@ -164,22 +167,20 @@ Prerequisites (auto-detected, skipped with a clear message if missing):
 
 ## Keeping sources in sync with cc65
 
-The `src/libsrc/bbc/` directory is a copy of the bbc library sources from the
-cc65 fork. The `scripts/compare-cc65.sh` script checks for functional differences
-(ignoring whitespace) and can sync changes from cc65:
+The ROM is built directly from the canonical cc65 fork at `../cc65`.  There is
+no longer a duplicated copy of `libsrc/{bbc,common,runtime}` in this project.
+The only local sources live in `src/libsrc/bbc-clib/` (the overlay), which
+provides a flat ROM-aware break handler and a build-exclusion list.
+
+The `scripts/compare-cc65.sh` script checks that the overlay files are in sync:
 
 ```bash
-# Check for differences
+# Check overlay is in sync
 bash scripts/compare-cc65.sh
 
-# Show unified diffs
-bash scripts/compare-cc65.sh --diff
-
-# Copy cc65 sources here (overwrites)
+# Copy from cc65 to overlay if needed
 bash scripts/compare-cc65.sh --sync
 ```
-
-After syncing, re-run the build: `make -C src clean copy-cc65-artifacts`.
 
 ## Further reading
 

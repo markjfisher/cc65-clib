@@ -5,11 +5,15 @@ title BBC Micro C Library Architecture — ROM-based cc65 Implementation
 
 package "cc65-clib Project" as clib_project {
     folder "Source Files" as clib_src {
-        component "src/libsrc/" as clib_libsrc
+        component "src/libsrc/bbc-clib/" as clib_libsrc
         note right of clib_libsrc
-            bbc/       - BBC-specific functions (copied from cc65)
-            common/    - Standard C library
-            runtime/   - Low-level runtime (multiply, divide, etc.)
+            Thin overlay only:
+            break_handler_common.s  (flat, ROM-aware)
+            excluded_objs.list      (build-exclusion list)
+
+            All other sources compile directly
+            from ../cc65/libsrc/{bbc,common,runtime}
+            via CC65_SRC in the Makefile.
         end note
     }
 

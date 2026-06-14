@@ -1,0 +1,13 @@
+# Object basenames excluded from the cc65-clib build.
+# These exist in the cc65 libsrc/ trees but are not needed for the BBC
+# CLIB ROM.  They are generic runtime helpers for other cc65 targets.
+aslax7
+asrax7
+shlax7
+shrax7
+ldptr1sp
+ldptr10sp
+ldptr1ysp
+returnFFFF
+sp-compat
+pushptr1idx

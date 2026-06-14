@@ -13,7 +13,7 @@ CC65_SRC ?= ../../cc65
 LD=ld65
 LDOPT=-v -vm
 CC=cc65
-CCOPT=-g -T -O -Or -r -I libsrc/bbc -I libsrc/runtime
+CCOPT=-g -T -O -Or -r -I $(CC65_SRC)/libsrc/bbc -I $(CC65_SRC)/libsrc/runtime
 AS=ca65
 ASOPT=-t bbc
 AR=ar65
@@ -22,14 +22,26 @@ CLIB_IMPORTS_SCRIPT = python3 clib_imports.py
 CLIB_STUBS_SCRIPT   = python3 clib_stubs.py
 RESOLVE_OBJS_SCRIPT = python3 resolve_objs.py
 
-RTDIR=libsrc/runtime
-COMDIR=libsrc/common
-BBCDIR=libsrc/bbc
+# Library source directories — point directly at the cc65 fork.
+# Only the bbc-clib overlay (break_handler_common.s) lives locally.
+RTDIR = $(CC65_SRC)/libsrc/runtime
+COMDIR = $(CC65_SRC)/libsrc/common
+BBCDIR = $(CC65_SRC)/libsrc/bbc
+OVERLAY = libsrc/bbc-clib
 
+# Source discovery.  cc65's bbc/libsrc has both brk/bbc/ and brk/bbc-clib/
+# break handlers; we only want the ROM-aware variant (bbc-clib).
 RTSRCS := $(wildcard $(RTDIR)/*.s)
 COMSRCS := $(shell find $(COMDIR) -iname "*.s" -o -iname "*.c")
-BBCSRCS := $(shell find $(BBCDIR) -iname "*.s" -o -iname "*.c")
-SRCSNOP := $(COMSRCS:$(COMDIR)/%=%) $(RTSRCS:$(RTDIR)/%=%) $(BBCSRCS:$(BBCDIR)/%=%)
+BBCSRCS := $(shell find $(BBCDIR) \( -iname "*.s" -o -iname "*.c" \) -not -path "*/brk/*")
+OVERLAYSRCS := $(shell find $(OVERLAY) -iname "*.s" 2>/dev/null)
+# Filter out sources that exist for other cc65 targets but are not needed here.
+EXCLUDED_OBJS := $(shell grep -v '^#' $(OVERLAY)/excluded_objs.list 2>/dev/null || true)
+_filter_basenames = $(foreach s,$1,$(if $(filter $(basename $(notdir $s)),$(EXCLUDED_OBJS)),,$s))
+SRCSNOP := $(call _filter_basenames,$(COMSRCS:$(COMDIR)/%=%) \
+           $(RTSRCS:$(RTDIR)/%=%) \
+           $(BBCSRCS:$(BBCDIR)/%=%) \
+           $(OVERLAYSRCS:$(OVERLAY)/%=%))
 
 # Work products
 OBJS  := $(addprefix $(WRK)/, $(patsubst %.c, %.o, $(patsubst %.s,%.o,$(SRCSNOP))))
@@ -126,6 +138,9 @@ $(WRK)/%.o: $(BBCDIR)/%.s | $(WRK)
 $(WRK)/oslib/%.o: $(BBCDIR)/oslib/%.s | $(WRK)/oslib
 	$(AS) $(ASOPT) -o $@ $<
 
+$(WRK)/%.o: $(OVERLAY)/%.s | $(WRK)
+	$(AS) $(ASOPT) -I $(CC65_SRC)/libsrc/bbc -o $@ $<
+
 $(WRK)/%.o: $(WRK)/%.s | $(WRK)
 	$(AS) $(ASOPT) -o $@ $<
 
@@ -137,6 +152,9 @@ $(WRK)/%.s: $(COMDIR)/%.c | $(WRK)
 
 $(WRK)/%.s: $(BBCDIR)/%.c | $(WRK)
 	$(CC) $(CCOPT) -o $@ $<
+
+$(WRK)/%.s: $(OVERLAY)/%.c | $(WRK)
+	$(CC) $(CCOPT) -I $(CC65_SRC)/libsrc/bbc -o $@ $<
 
 $(WRK)/oslib/%.s: $(BBCDIR)/oslib/%.c | $(WRK)/oslib
 	$(CC) $(CCOPT) -o $@ $<

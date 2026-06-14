@@ -133,19 +133,15 @@ This requires resolving three concrete divergences first:
 3. **common/runtime**: confirm cc65-clib's `common`/`runtime` copies have no
    functional divergence from cc65's beyond formatting. **VERIFY** (diff -w).
 
-**Migration approach (low-risk, staged):**
-- Stage A (immediate, unblocks correctness): treat cc65/libsrc/bbc as canonical
-  and **sync** the functional fixes into cc65-clib's copy (osfind, all osfile_*),
-  then regenerate the ROM. This is the "just sync once now" path and immediately
-  makes bbc-clib correct so testing can proceed.
-- Stage B (later, structural): repoint cc65-clib `BBCDIR/COMDIR/RTDIR` at
-  `$(CC65_SRC)/libsrc/*`, delete the duplicate trees, and handle the brk-reorg.
-  Validate the regenerated ROM/stubs are byte-identical (modulo formatting) to
-  Stage A's, then commit the dedup.
+**Migration approach:**
+- Stage A (complete): synced cc65 functional fixes (osfind, osfile) and validated
+  dual-mode tests green.
+- Stage B (complete): repointed `BBCDIR/COMDIR/RTDIR` at `$(CC65_SRC)/libsrc/*`,
+  deleted the duplicate `src/libsrc/{bbc,common,runtime}` trees, and handled the
+  brk-reorg via a thin overlay (`src/libsrc/bbc-clib/`). Build and test suite
+  verified green.
 
-A finished `compare-cc65.sh` (or a tiny `sync_sources.sh`) using `diff -w` to
-detect *functional* (non-whitespace) drift is the safety net for Stage A and a
-verification tool for Stage B.
+`scripts/compare-cc65.sh` verifies the overlay is in sync with cc65.
 
 ---
 
@@ -358,10 +354,13 @@ Notes for later:
   design + open-issue writeup in `docs/BBC_CLIB_JUMPTABLE_DESIGN.md` (the
   implementation remains in git history). Suite restored to 24 passed, 1 skipped.
 
-### Remaining in Phase 1 (Stage B — deferred per decision)
-- Repoint cc65-clib `BBCDIR/COMDIR/RTDIR` at `$(CC65_SRC)/libsrc/*` and delete
-  the duplicate trees, after dual-mode tests are green (verify common/runtime
-  have no functional divergence first).
+### Stage B — DONE (libsrc dedup)
+
+The duplicate `src/libsrc/{bbc,common,runtime}` trees have been deleted.
+All sources now compile directly from `$(CC65_SRC)/libsrc/*`.  A thin overlay
+at `src/libsrc/bbc-clib/` provides the ROM-aware break handler
+(`break_handler_common.s`) and a build-exclusion list (`excluded_objs.list`).
+Unit and integration tests all green.
 
 ## 6. Suggested execution order
 1. Phase 1 (correctness) — unblocks everything; proves the pipeline.
