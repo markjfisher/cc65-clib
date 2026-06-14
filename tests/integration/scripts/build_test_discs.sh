@@ -40,6 +40,9 @@ PROGRAMS=(
   "TCLOCK  test_clock.c"
   "TCONSL  test_console.c"
   "TFDISK  test_fileio.c"
+  "TFDIAG  test_fileio_diag.c"
+  "TFEXST  test_fileio_existing.c"
+  "TFSYS   test_fileio_sys.c"
   "TKBHIT  test_kbhit.c"
   "TSCREN  test_screen.c"
   "TOSFIL  test_osfile.c"
@@ -84,6 +87,16 @@ for mode in $MODES; do
   stage_inf "$stage" "ALPHA" "000000 000000"
   stage_inf "$stage" "BETA"  "000000 000000"
   python3 "$CREATE_SSD" -i "$stage" -o "$out_dir/TDIR.ssd" -t TDIR >/dev/null
+
+  # Existing-file write test (TFEXST): stage a file that already exists.
+  echo "  test_fileio_existing.c -> TFEXST"
+  stage="$STAGE_ROOT/$mode/TFEXST"
+  rm -rf "$stage"; mkdir -p "$stage"
+  "$CC65" -t "$mode" --start-addr 0x1900 -o "$stage/TFEXST" "$SRC_DIR/test_fileio_existing.c" 2>/dev/null
+  stage_inf "$stage" "TFEXST" "$LOAD_EXEC"
+  printf 'seed-data' > "$stage/EXIST"
+  stage_inf "$stage" "EXIST" "000000 000000"
+  python3 "$CREATE_SSD" -i "$stage" -o "$out_dir/TFEXST.ssd" -t TFEXST >/dev/null
 done
 
 echo "Done. Output in $OUT_BASE/{$(echo $MODES | tr ' ' ',')}"
