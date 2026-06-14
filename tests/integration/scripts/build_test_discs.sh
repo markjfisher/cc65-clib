@@ -42,6 +42,7 @@ PROGRAMS=(
   "TFDISK  test_fileio.c"
   "TFDIAG  test_fileio_diag.c"
   "TFEXST  test_fileio_existing.c"
+  "TFFIND  test_osfind_diag.c"
   "TFSYS   test_fileio_sys.c"
   "TKBHIT  test_kbhit.c"
   "TSCREN  test_screen.c"
@@ -97,6 +98,16 @@ for mode in $MODES; do
   printf 'seed-data' > "$stage/EXIST"
   stage_inf "$stage" "EXIST" "000000 000000"
   python3 "$CREATE_SSD" -i "$stage" -o "$out_dir/TFEXST.ssd" -t TFEXST >/dev/null
+
+  # OSFIND diagnostic (TFFIND): stage a file that definitely exists.
+  echo "  test_osfind_diag.c -> TFFIND"
+  stage="$STAGE_ROOT/$mode/TFFIND"
+  rm -rf "$stage"; mkdir -p "$stage"
+  "$CC65" -t "$mode" --start-addr 0x1900 -o "$stage/TFFIND" "$SRC_DIR/test_osfind_diag.c" 2>/dev/null
+  stage_inf "$stage" "TFFIND" "$LOAD_EXEC"
+  printf 'seed-data' > "$stage/EXIST"
+  stage_inf "$stage" "EXIST" "000000 000000"
+  python3 "$CREATE_SSD" -i "$stage" -o "$out_dir/TFFIND.ssd" -t TFFIND >/dev/null
 done
 
 echo "Done. Output in $OUT_BASE/{$(echo $MODES | tr ' ' ',')}"

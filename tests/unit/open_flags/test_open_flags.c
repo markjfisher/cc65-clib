@@ -81,7 +81,7 @@ void test_func(void) {
     test_result[17] = (unsigned char)__errno;
 
     set_exists(0);
-    fd = open("RW", O_RDWR | O_CREAT);
+    fd = open("RW", O_WRONLY | O_CREAT | O_EXCL);
     test_result[20] = *last_open_mode;
     if (fd >= 0) {
         write(fd, "Z", 1);
