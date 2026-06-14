@@ -1,0 +1,20 @@
+////////////////////////////////
+marker $$ disable_cursor_edit test $$
+////////////////////////////////
+
+memory load atari "${BINARY_PATH}"
+symbols load "${SYMBOLS_PATH}"
+memory write $mock_print_armed 0x(01)
+
+registers flush
+
+run $init_harness until (CP = $end_init_harness OR cycle_count > 500)
+assert CP = $end_init_harness $$completed correctly$$
+
+; disable_cursor_edit calls OSBYTE #$04 with X=1, Y=0
+; restore_cursor_edit calls OSBYTE #$04 with saved old value (X=1 from disable)
+; Our osbyte_04 stub is a noop rts — it doesn't call OSWRCH.
+; So the print mock buffer will be empty.
+; The real test is that both functions complete without crashing.
+
+assert $_test_result = 0x01     $$cursor edit completed$$

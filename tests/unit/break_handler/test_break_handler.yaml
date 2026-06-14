@@ -1,0 +1,13 @@
+name: break_handler — test BRK recovery
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+
+src_files:
+  - test_break_handler.s
+
+ld_flags:
+  - -t
+  - bbc
+
+test_script: test_break_handler.txt

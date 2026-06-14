@@ -1,0 +1,10 @@
+name: errors_full — test all error codes and errout
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+src_files:
+  - test_errors_full.s
+ld_flags:
+  - -t
+  - bbc
+test_script: test_errors_full.txt

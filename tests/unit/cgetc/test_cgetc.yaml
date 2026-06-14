@@ -1,0 +1,13 @@
+name: cgetc — test keyboard character input (smoke test, OSRDCH unimplemented)
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+
+src_files:
+  - test_cgetc.s
+
+ld_flags:
+  - -t
+  - bbc
+
+test_script: test_cgetc.txt

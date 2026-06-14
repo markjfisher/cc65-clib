@@ -1,0 +1,13 @@
+name: file_open — test file open/close error handling
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+
+src_files:
+  - test_file_open.s
+
+ld_flags:
+  - -t
+  - bbc
+
+test_script: test_file_open.txt

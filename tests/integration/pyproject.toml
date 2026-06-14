@@ -1,0 +1,31 @@
+[project]
+name = "test-cc65-clib-integration"
+version = "0.1.0"
+description = "Beebium integration tests for cc65 bbc library"
+requires-python = ">=3.12"
+dependencies = [
+    "beebium>=0.1.0",
+    "pytest>=8.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest-timeout",
+]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build]
+packages = []
+
+[tool.pytest.ini_options]
+testpaths = ["scripted"]
+timeout = 60
+timeout_method = "thread"
+filterwarnings = ["ignore::DeprecationWarning"]
+markers = [
+    "needs_dfs: requires DFS (disc image loaded)",
+    "needs_clib: requires cc65 clib ROM loaded",
+    "slow: test that takes longer than usual",
+]

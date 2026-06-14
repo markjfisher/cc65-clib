@@ -1,0 +1,16 @@
+////////////////////////////////
+marker $$ fd_seek test $$
+////////////////////////////////
+
+memory load atari "${BINARY_PATH}"
+symbols load "${SYMBOLS_PATH}"
+registers flush
+
+run $init_harness until (CP = $end_init_harness OR cycle_count > 5000)
+assert CP = $end_init_harness $$completed correctly$$
+
+; Verify getfree works, setseek/getseek/clearseek all complete
+assert $_test_result = 0x03     $$getfree returned fd=3$$
+assert $_test_result + 1 = 0x00 $$setseek returned 0 (success)$$
+assert $_test_result + 5 = 0x00 $$clearseek returned 0 (success)$$
+assert $_test_result + 7 = 0x01 $$completed$$

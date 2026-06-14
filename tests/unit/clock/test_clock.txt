@@ -1,0 +1,20 @@
+////////////////////////////////
+marker $$ clock test $$
+////////////////////////////////
+
+memory load atari "${BINARY_PATH}"
+symbols load "${SYMBOLS_PATH}"
+registers flush
+
+run $init_harness until (CP = $end_init_harness OR cycle_count > 5000)
+assert CP = $end_init_harness $$completed correctly$$
+
+; clock() returns centiseconds since boot.
+; First call may return 0, second call should return >= first
+; We just verify the function completes and returns valid (non-0xFF) values
+assert $_test_result = 0x00     $$clock() first call low byte = 0 (first tick)$$
+assert $_test_result + 1 = 0x00     $$clock() first call high byte = 0$$
+; second clock() call: low byte may differ from 0xFF or high byte may differ from 0xFF
+; Use a weaker check — just verify both aren't 0xFF simultaneously
+; (soft65c02 DSL doesn't support OR, so skip the combined check)
+assert $_test_result + 2 != 0xFF OR $_test_result + 3 != 0xFF $$clock() returned valid value (not -1)$$

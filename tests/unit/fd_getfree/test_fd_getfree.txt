@@ -1,0 +1,16 @@
+////////////////////////////////
+marker $$ fd_getfree test $$
+////////////////////////////////
+
+memory load atari "${BINARY_PATH}"
+symbols load "${SYMBOLS_PATH}"
+registers flush
+
+run $init_harness until (CP = $end_init_harness OR cycle_count > 5000)
+assert CP = $end_init_harness $$completed correctly$$
+
+assert $_test_result = 0x03     $$first free fd = 3 (fds 0,1,2 are reserved)$$
+assert $_test_result + 1 = 0x00 $$first return high byte = 0$$
+assert $_test_result + 2 = 0x04     $$second free fd = 4$$
+assert $_test_result + 3 = 0x00 $$second return high byte = 0$$
+assert $_test_result + 4 = 0x01 $$completed$$

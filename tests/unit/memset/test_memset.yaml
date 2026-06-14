@@ -1,0 +1,13 @@
+name: memset — test memory fill
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+
+src_files:
+  - test_memset.s
+
+ld_flags:
+  - -t
+  - bbc
+
+test_script: test_memset.txt

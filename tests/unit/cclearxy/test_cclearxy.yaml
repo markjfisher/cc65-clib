@@ -1,0 +1,10 @@
+name: cclearxy — test clear chars at position, multi-export from cclear.s
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+src_files:
+  - test_cclearxy.s
+ld_flags:
+  - -t
+  - bbc
+test_script: test_cclearxy.txt

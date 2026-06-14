@@ -1,0 +1,10 @@
+name: break_global_install — test global BRKV install/uninstall
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+src_files:
+  - test_break_global_install.s
+ld_flags:
+  - -t
+  - bbc
+test_script: test_break_global_install.txt

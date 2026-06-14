@@ -1,0 +1,13 @@
+name: memcpy — test memory copy
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+
+src_files:
+  - test_memcpy.s
+
+ld_flags:
+  - -t
+  - bbc
+
+test_script: test_memcpy.txt

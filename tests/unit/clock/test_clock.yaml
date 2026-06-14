@@ -1,0 +1,13 @@
+name: clock — test time functions
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+
+src_files:
+  - test_clock.s
+
+ld_flags:
+  - -t
+  - bbc
+
+test_script: test_clock.txt

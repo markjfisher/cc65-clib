@@ -1,0 +1,13 @@
+name: fdtable — test file descriptor table functions
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+
+src_files:
+  - test_fdtable.s
+
+ld_flags:
+  - -t
+  - bbc
+
+test_script: test_fdtable.txt

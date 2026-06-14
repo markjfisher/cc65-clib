@@ -1,0 +1,10 @@
+name: preservezp — test zero page save/restore
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+src_files:
+  - test_preservezp.s
+ld_flags:
+  - -t
+  - bbc
+test_script: test_preservezp.txt

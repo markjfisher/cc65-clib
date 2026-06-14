@@ -1,0 +1,10 @@
+name: fd_getfree — test free file descriptor allocation
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+src_files:
+  - test_fd_getfree.s
+ld_flags:
+  - -t
+  - bbc
+test_script: test_fd_getfree.txt

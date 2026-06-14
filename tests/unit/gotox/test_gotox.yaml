@@ -1,0 +1,13 @@
+name: gotox/gotoy — test cursor positioning individually
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+
+src_files:
+  - test_gotox.s
+
+ld_flags:
+  - -t
+  - bbc
+
+test_script: test_gotox.txt

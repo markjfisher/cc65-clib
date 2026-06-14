@@ -1,0 +1,13 @@
+name: strlen — test string length calculation
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+
+src_files:
+  - test_strlen.s
+
+ld_flags:
+  - -t
+  - bbc
+
+test_script: test_strlen.txt

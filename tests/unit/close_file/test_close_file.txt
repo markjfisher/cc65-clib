@@ -1,0 +1,18 @@
+////////////////////////////////
+marker $$ close_file test $$
+////////////////////////////////
+
+memory load atari "${BINARY_PATH}"
+symbols load "${SYMBOLS_PATH}"
+
+; Mark the mock file as open; close_file should clear FILE_OPEN ($0A02).
+memory write #0x0A02 0x(01)
+
+registers flush
+
+run $init_harness until (CP = $end_init_harness OR cycle_count > 2000)
+assert CP = $end_init_harness $$completed correctly$$
+
+assert $_test_result = 0x00      $$close_file returned 0$$
+assert $_test_result + 1 = 0x00  $$close_file return high byte 0$$
+assert #0x0A02 = 0x00            $$mock file marked closed$$

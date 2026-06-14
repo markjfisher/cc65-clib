@@ -1,0 +1,10 @@
+name: cputcxy — test put character at position
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+src_files:
+  - test_cputcxy.s
+ld_flags:
+  - -t
+  - bbc
+test_script: test_cputcxy.txt

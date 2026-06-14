@@ -1,0 +1,18 @@
+name: BBC cc65 test harness built when using soft65c02_unit
+
+target: none
+compiler: cc65
+
+config_file: ./cfg/harness.ld65.cfg
+
+src_files:
+  - ./src/crt0.s
+  - ./src/osbyte_stub.s
+  - ./src/print_mock.s
+  - ./src/mos_vectors.s
+  - ./src/stubs.s
+  - ./src/file_mock.s
+
+# will allow inc files from the root path, was tied into older hello.inc
+asm_include_paths:
+  - ./

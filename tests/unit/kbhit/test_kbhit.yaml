@@ -1,0 +1,13 @@
+name: kbhit — test keyboard hit detection via OSBYTE
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+
+src_files:
+  - test_kbhit.s
+
+ld_flags:
+  - -t
+  - bbc
+
+test_script: test_kbhit.txt

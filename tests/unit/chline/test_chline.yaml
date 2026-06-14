@@ -1,0 +1,13 @@
+name: chline/cvline — test horizontal and vertical line drawing
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+
+src_files:
+  - test_chline.s
+
+ld_flags:
+  - -t
+  - bbc
+
+test_script: test_chline.txt

@@ -1,0 +1,20 @@
+////////////////////////////////
+marker $$ memset test $$
+////////////////////////////////
+
+memory load atari "${BINARY_PATH}"
+symbols load "${SYMBOLS_PATH}"
+registers flush
+
+run $init_harness until (CP = $end_init_harness OR cycle_count > 5000)
+assert CP = $end_init_harness $$completed correctly$$
+
+assert $_test_result = 0xAA     $$buffer[0] filled with 0xAA$$
+assert $_test_result + 1 = 0xAA $$buffer[3] filled with 0xAA$$
+assert $_test_result + 2 = 0xFF $$buffer[4] unchanged (0xFF)$$
+assert $_test_result + 3 = 0x00 $$buffer[0] filled with 0$$
+assert $_test_result + 4 = 0x00 $$buffer[1] filled with 0$$
+assert $_test_result + 5 = 0xBB $$buffer[0] unchanged (memset 0 bytes)$$
+assert $_test_result + 6 = 0xFF $$buffer[0] filled with 0xFF$$
+assert $_test_result + 7 = 0xFF $$buffer[7] filled with 0xFF$$
+assert $_test_result + 8 = 0x00 $$buffer[8] not filled (still 0)$$

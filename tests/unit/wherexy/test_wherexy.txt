@@ -1,0 +1,29 @@
+////////////////////////////////
+marker $$ wherexy test $$
+////////////////////////////////
+
+memory load atari "${BINARY_PATH}"
+symbols load "${SYMBOLS_PATH}"
+memory write $mock_print_armed 0x(01)
+
+; Set up VDU workspace so wherex/wherey return real values
+; VDU_WKSP=$300, VDUVAR_TEXT_CURSOR_XY=$18 => X at $318, Y at $319
+memory write #0x0318 0x(0A,05)
+
+registers flush
+
+run $init_harness until (CP = $end_init_harness OR cycle_count > 1000)
+assert CP = $end_init_harness $$completed correctly$$
+
+; Initial wherex/y from mock VDU workspace
+assert $_test_result = 0x0A     $$wherex = 10 (from VDU workspace)$$
+assert $_test_result + 1 = 0x05 $$wherey = 5 (from VDU workspace)$$
+
+; gotox(20) sends VDU31, 20 (2 bytes)
+; gotoy(10) sends its 3 bytes
+assert #0xC800 = 0x1F     $$VDU 31 (gotox)$$
+assert #0xC801 = 0x14     $$X=20$$
+assert #0xC802 = 0x05     $$gotoy workspace read (Y=5 from $319)$$
+assert #0xC803 = 0x1F     $$VDU 31 (gotoy)$$
+assert #0xC804 = 0x0A     $$workspace X (10 from $318)$$
+assert #0xC805 = 0x0A     $$Y=10$$

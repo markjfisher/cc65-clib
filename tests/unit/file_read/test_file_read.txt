@@ -1,0 +1,23 @@
+////////////////////////////////
+marker $$ file read test $$
+////////////////////////////////
+
+memory load atari "${BINARY_PATH}"
+symbols load "${SYMBOLS_PATH}"
+
+; File mock setup: contents "Hi", length 2, handle $11.
+memory write #0x0900 0x(48,69)
+memory write #0x0A00 0x(02)
+memory write #0x0A03 0x(11)
+
+registers flush
+
+run $init_harness until (CP = $end_init_harness OR cycle_count > 500000)
+assert CP = $end_init_harness $$completed correctly$$
+
+assert $_test_result = 0x01      $$open() succeeded$$
+assert $_test_result + 1 = 0x02  $$read() returned 2 bytes$$
+assert $_test_result + 2 = 0x48  $$buf[0] = 'H'$$
+assert $_test_result + 3 = 0x69  $$buf[1] = 'i'$$
+assert $_test_result + 4 = 0x00  $$second read() returned 0 (EOF)$$
+assert $_test_result + 5 = 0x01  $$completed$$

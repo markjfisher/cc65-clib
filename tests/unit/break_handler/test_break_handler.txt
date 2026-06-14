@@ -1,0 +1,14 @@
+////////////////////////////////
+marker $$ break handler test $$
+////////////////////////////////
+
+memory load atari "${BINARY_PATH}"
+symbols load "${SYMBOLS_PATH}"
+registers flush
+
+run $init_harness until (CP = $end_init_harness OR cycle_count > 10000)
+assert CP = $end_init_harness $$completed correctly$$
+
+assert $_test_result = 0x00     $$set_brk_ret returned 0 (armed)$$
+assert $_test_result + 1 = 0x01     $$recovered from BRK (A=1)$$
+assert $_test_result + 2 = 0x01     $$disarmed successfully$$

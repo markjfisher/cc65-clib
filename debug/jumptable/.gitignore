@@ -1,0 +1,13 @@
+# Build outputs (regenerate with build_debug.sh). Sources/scripts/README are tracked.
+clib.rom
+clib.lbl
+clib.map
+*.ssd
+*.lbl
+# compiled program binaries (no extension)
+VECOK
+VECGOTO
+VECFAIL
+TSCREN
+
+*.json

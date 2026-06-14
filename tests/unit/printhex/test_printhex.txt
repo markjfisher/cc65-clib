@@ -1,0 +1,22 @@
+////////////////////////////////
+marker $$ printhex test $$
+////////////////////////////////
+
+memory load atari "${BINARY_PATH}"
+symbols load "${SYMBOLS_PATH}"
+memory write $mock_print_armed 0x(01)
+
+registers flush
+
+run $init_harness until (CP = $end_init_harness OR cycle_count > 500)
+assert CP = $end_init_harness $$completed correctly$$
+
+; printhex($A5) should output "A5"
+assert #0xC800 = 0x41     $$first hex digit = 'A'$$
+assert #0xC801 = 0x35     $$second hex digit = '5'$$
+
+; printhex($03) should output "03"
+assert #0xC802 = 0x30     $$first hex digit = '0'$$
+assert #0xC803 = 0x33     $$second hex digit = '3'$$
+
+assert $_test_result = 0x01     $$printhex completed$$

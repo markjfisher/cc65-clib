@@ -1,0 +1,10 @@
+name: fd_seek — test fd seek set/get/clear
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+src_files:
+  - test_fd_seek.s
+ld_flags:
+  - -t
+  - bbc
+test_script: test_fd_seek.txt

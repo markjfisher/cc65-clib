@@ -1,0 +1,14 @@
+////////////////////////////////
+marker $$ errors test $$
+////////////////////////////////
+
+memory load atari "${BINARY_PATH}"
+symbols load "${SYMBOLS_PATH}"
+registers flush
+
+run $init_harness until (CP = $end_init_harness OR cycle_count > 500)
+assert CP = $end_init_harness $$completed correctly$$
+
+assert $_test_result = 0x07     $$einval sets errno to EINVAL (7)$$
+assert $_test_result + 1 = 0x10 $$ebadf sets errno to EBADF (16)$$
+assert $_test_result + 2 = 0x01 $$completed$$

@@ -1,0 +1,17 @@
+////////////////////////////////
+marker $$ strcmp test $$
+////////////////////////////////
+
+memory load atari "${BINARY_PATH}"
+symbols load "${SYMBOLS_PATH}"
+registers flush
+
+run $init_harness until (CP = $end_init_harness OR cycle_count > 5000)
+assert CP = $end_init_harness $$completed correctly$$
+
+assert $_test_result = 0x00     $$strcmp("ABC","ABC") = 0$$
+assert $_test_result + 1 != 0x00 $$strcmp("ABC","CDE") != 0 (negative)$$
+assert $_test_result + 2 != 0x00 $$strcmp("CDE","ABC") != 0 (positive)$$
+assert $_test_result + 3 != 0x00 $$strcmp("","A") != 0$$
+assert $_test_result + 4 != 0x00 $$strcmp("AB","ABC") != 0$$
+assert $_test_result + 5 != 0x00 $$strcmp("abc","ABC") != 0 (case-sensitive)$$

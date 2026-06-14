@@ -1,0 +1,10 @@
+name: write — open/write/close through the file mock
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+src_files:
+  - test_file_write.c
+ld_flags:
+  - -t
+  - bbc
+test_script: test_file_write.txt

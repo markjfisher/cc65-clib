@@ -1,0 +1,17 @@
+////////////////////////////////
+marker $$ cgetc test $$
+////////////////////////////////
+
+memory load atari "${BINARY_PATH}"
+symbols load "${SYMBOLS_PATH}"
+
+; Set up mock character buffer for OSRDCH — provides 'X', 'Y'
+memory write #0x1E00 0x(58,59,00)
+
+registers flush
+
+run $init_harness until (CP = $end_init_harness OR cycle_count > 5000)
+assert CP = $end_init_harness $$completed correctly$$
+
+assert $_test_result = 0x58     $$first cgetc returned 'X' (0x58)$$
+assert $_test_result + 1 = 0x59 $$second cgetc returned 'Y' (0x59)$$

@@ -1,0 +1,17 @@
+////////////////////////////////
+marker $$ break_handler_debug test $$
+////////////////////////////////
+
+memory load atari "${BINARY_PATH}"
+symbols load "${SYMBOLS_PATH}"
+registers flush
+
+run $init_harness until (CP = $end_init_harness OR cycle_count > 5000)
+assert CP = $end_init_harness $$completed correctly$$
+
+; _test_result + 0: set_brk_debug_mode_only return (non-zero ok, just verifies it ran)
+; _test_result + 1: on first pass stores 0 (armed), on recovery stores 1 — final value is 1
+; _test_result + 2: completion marker = 1
+
+assert $_test_result + 1 = 0x01 $$recovered from armed BRK with A=1$$
+assert $_test_result + 2 = 0x01 $$disarmed and completed$$

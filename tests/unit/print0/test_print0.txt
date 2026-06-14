@@ -1,0 +1,17 @@
+////////////////////////////////
+marker $$ print0 test $$
+////////////////////////////////
+
+memory load atari "${BINARY_PATH}"
+symbols load "${SYMBOLS_PATH}"
+memory write $mock_print_armed 0x(01)
+
+registers flush
+
+run $init_harness until (CP = $end_init_harness OR cycle_count > 50000)
+assert CP = $end_init_harness $$completed correctly$$
+
+; print0 outputs null-terminated string via OSWRCH
+assert #0xC800 ~ "Hello print0!"   $$print0 output matches expected string$$
+
+assert $_test_result = 0x01     $$print0 completed$$

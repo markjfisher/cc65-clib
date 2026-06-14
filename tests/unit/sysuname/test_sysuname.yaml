@@ -1,0 +1,13 @@
+name: sysuname — test system information query
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+
+src_files:
+  - test_sysuname.s
+
+ld_flags:
+  - -t
+  - bbc
+
+test_script: test_sysuname.txt

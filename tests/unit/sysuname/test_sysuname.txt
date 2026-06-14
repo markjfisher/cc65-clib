@@ -1,0 +1,39 @@
+////////////////////////////////
+marker $$ sysuname test $$
+////////////////////////////////
+
+memory load atari "${BINARY_PATH}"
+symbols load "${SYMBOLS_PATH}"
+registers flush
+
+run $init_harness until (CP = $end_init_harness OR cycle_count > 5000)
+assert CP = $end_init_harness $$completed correctly$$
+
+; __sysuname copies utsdata to the buffer
+; utsname struct: sysname(17), nodename(9), release(9), version(9), machine(25)
+; machine field is at offset 44 (utsname::machine)
+; "BBC Micro" = $42 $42 $43 $20 $4D $69 $63 $72 $6F
+
+; Check sysname at offset 0: "cc65" = $63 $63 $36 $35
+assert $_test_result = 0x63     $$sysname[0] = 'c'$$
+assert $_test_result + 1 = 0x63     $$sysname[1] = 'c'$$
+assert $_test_result + 2 = 0x36     $$sysname[2] = '6'$$
+assert $_test_result + 3 = 0x35     $$sysname[3] = '5'$$
+assert $_test_result + 4 = 0x00     $$sysname[4] = '\0'$$
+
+; Check machine at offset 44: "BBC Micro"
+; offset 44 from _test_result base ($1B83) = $1B83 + 44 = $1BAF
+assert $_test_result + 44 = 0x42     $$machine[0] = 'B'$$
+assert $_test_result + 45 = 0x42     $$machine[1] = 'B'$$
+assert $_test_result + 46 = 0x43     $$machine[2] = 'C'$$
+assert $_test_result + 47 = 0x20     $$machine[3] = ' '$$
+assert $_test_result + 48 = 0x4D     $$machine[4] = 'M'$$
+assert $_test_result + 49 = 0x69     $$machine[5] = 'i'$$
+assert $_test_result + 50 = 0x63     $$machine[6] = 'c'$$
+assert $_test_result + 51 = 0x72     $$machine[7] = 'r'$$
+assert $_test_result + 52 = 0x6F     $$machine[8] = 'o'$$
+assert $_test_result + 53 = 0x00     $$machine[9] = '\0'$$
+
+; Return value should be 0 (success)
+assert $_test_result + 68 = 0x00     $$__sysuname returned 0 (success)$$
+assert $_test_result + 69 = 0x01     $$sysuname test completed$$

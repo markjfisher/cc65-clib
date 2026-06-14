@@ -1,0 +1,13 @@
+name: strchr — test character search
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+
+src_files:
+  - test_strchr.s
+
+ld_flags:
+  - -t
+  - bbc
+
+test_script: test_strchr.txt

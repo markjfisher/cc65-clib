@@ -1,0 +1,13 @@
+name: scrsize — test screen size query
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+
+src_files:
+  - test_scrsize.s
+
+ld_flags:
+  - -t
+  - bbc
+
+test_script: test_scrsize.txt

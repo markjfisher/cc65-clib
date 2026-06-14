@@ -1,0 +1,13 @@
+name: mainargs — test command line argument parsing
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+
+src_files:
+  - test_mainargs.s
+
+ld_flags:
+  - -t
+  - bbc
+
+test_script: test_mainargs.txt

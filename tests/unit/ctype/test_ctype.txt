@@ -1,0 +1,60 @@
+////////////////////////////////
+marker $$ ctype test $$
+////////////////////////////////
+
+memory load atari "${BINARY_PATH}"
+symbols load "${SYMBOLS_PATH}"
+registers flush
+
+run $init_harness until (CP = $end_init_harness OR cycle_count > 5000)
+assert CP = $end_init_harness $$completed correctly$$
+
+; isalpha (mask 0x03)
+assert $_test_result = 0x02     $$isalpha('A') returns _U mask = 0x02$$
+assert $_test_result + 1 = 0x01     $$isalpha('z') returns _L mask = 0x01$$
+assert $_test_result + 2 = 0x00     $$isalpha('0') = false$$
+assert $_test_result + 3 = 0x00     $$isalpha(' ') = false$$
+
+; isdigit (mask 0x04)
+assert $_test_result + 4 = 0x04     $$isdigit('5') returns _D mask = 0x04$$
+assert $_test_result + 5 = 0x04     $$isdigit('0') returns _D mask = 0x04$$
+assert $_test_result + 6 = 0x00     $$isdigit('A') = false$$
+
+; isalnum (mask 0x07)
+assert $_test_result + 7 = 0x02     $$isalnum('A') returns _U mask = 0x02$$
+assert $_test_result + 8 = 0x04     $$isalnum('9') returns _D mask = 0x04$$
+assert $_test_result + 9 = 0x00     $$isalnum('#') = false$$
+
+; isspace (mask 0x60)
+assert $_test_result + 10 = 0x20     $$isspace(' ') returns _S mask = 0x20$$
+assert $_test_result + 11 = 0x40     $$isspace('\t') returns _WS mask = 0x40$$
+assert $_test_result + 12 = 0x00     $$isspace('A') = false$$
+assert $_test_result + 13 = 0x40     $$isspace('\n') returns _WS mask = 0x40$$
+
+; islower/isupper (mask 0x01 / 0x02)
+assert $_test_result + 14 = 0x01     $$islower('a') returns _L mask = 0x01$$
+assert $_test_result + 15 = 0x00     $$islower('A') = false$$
+assert $_test_result + 16 = 0x02     $$isupper('Z') returns _U mask = 0x02$$
+assert $_test_result + 17 = 0x00     $$isupper('z') = false$$
+
+; isxdigit (mask 0x08)
+assert $_test_result + 18 = 0x08     $$isxdigit('f') returns _X mask = 0x08$$
+assert $_test_result + 19 = 0x00     $$isxdigit('G') = false$$
+
+; toupper/tolower (return character)
+assert $_test_result + 20 = 0x41     $$toupper('a') = 'A'$$
+assert $_test_result + 21 = 0x41     $$toupper('A') = 'A'$$
+assert $_test_result + 22 = 0x35     $$toupper('5') = '5'$$
+assert $_test_result + 23 = 0x7A     $$tolower('Z') = 'z'$$
+assert $_test_result + 24 = 0x7A     $$tolower('z') = 'z'$$
+assert $_test_result + 25 = 0x24     $$tolower('$') = '$'$$
+
+; ispunct (inverted logic: returns 0xFF for punct, 0x00 for non-punct)
+assert $_test_result + 26 = 0xFF     $$ispunct('.') = true (0xFF)$$
+assert $_test_result + 27 = 0x00     $$ispunct('A') = false$$
+
+; isprint/iscntrl
+assert $_test_result + 28 = 0x10     $$isprint(' ') = true (0x10)$$
+assert $_test_result + 29 = 0x00     $$isprint(0x01) = false$$
+assert $_test_result + 30 = 0x10     $$isprint('~') = true (0x10)$$
+assert $_test_result + 31 = 0x10     $$iscntrl(0x01) = true (0x10)$$

@@ -1,0 +1,24 @@
+////////////////////////////////
+marker $$ file seek test $$
+////////////////////////////////
+
+memory load atari "${BINARY_PATH}"
+symbols load "${SYMBOLS_PATH}"
+
+; File mock: contents "ABCDE", length 5, handle $11.
+memory write #0x0900 0x(41,42,43,44,45)
+memory write #0x0A00 0x(05)
+memory write #0x0A03 0x(11)
+
+registers flush
+
+run $init_harness until (CP = $end_init_harness OR cycle_count > 800000)
+assert CP = $end_init_harness $$completed correctly$$
+
+assert $_test_result = 0x01      $$open() succeeded$$
+assert $_test_result + 1 = 0x02  $$lseek(SEEK_SET,2) returned 2$$
+assert $_test_result + 2 = 0x43  $$read after seek = 'C'$$
+assert $_test_result + 3 = 0x00  $$lseek(SEEK_SET,0) returned 0$$
+assert $_test_result + 4 = 0x41  $$read after rewind = 'A'$$
+assert $_test_result + 5 = 0x05  $$lseek(SEEK_END) returned 5 (length)$$
+assert $_test_result + 6 = 0x01  $$completed$$

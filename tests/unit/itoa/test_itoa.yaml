@@ -1,0 +1,13 @@
+name: itoa — test integer to string conversion
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+
+src_files:
+  - test_itoa.s
+
+ld_flags:
+  - -t
+  - bbc
+
+test_script: test_itoa.txt

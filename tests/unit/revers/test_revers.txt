@@ -1,0 +1,18 @@
+////////////////////////////////
+marker $$ revers test $$
+////////////////////////////////
+
+memory load atari "${BINARY_PATH}"
+symbols load "${SYMBOLS_PATH}"
+registers flush
+
+run $init_harness until (CP = $end_init_harness OR cycle_count > 5000)
+assert CP = $end_init_harness $$completed correctly$$
+
+; _revers(1) sets _revflag=255, calls setcolors (VDU 17 sequences)
+; Returns old _revflag value (initially 0)
+assert $_test_result = 0x00     $$revers(1) returned old revflag=0$$
+; _revers(0) sets _revflag=0, calls setcolors
+; Returns old _revflag value (was 255)
+assert $_test_result + 1 = 0xFF     $$revers(0) returned old revflag=255$$
+assert $_test_result + 2 = 0x01     $$revers operations completed$$

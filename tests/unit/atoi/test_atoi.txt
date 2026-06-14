@@ -1,0 +1,18 @@
+////////////////////////////////
+marker $$ atoi test $$
+////////////////////////////////
+
+memory load atari "${BINARY_PATH}"
+symbols load "${SYMBOLS_PATH}"
+registers flush
+
+run $init_harness until (CP = $end_init_harness OR cycle_count > 5000)
+assert CP = $end_init_harness $$completed correctly$$
+
+assert $_test_result = 0x7B     $$atoi("123") & 0xFF = 0x7B (123)$$
+assert $_test_result + 1 = 0xD6 $$atoi("-42") & 0xFF = 0xD6 (-42 as unsigned)$$
+assert $_test_result + 2 = 0x00 $$atoi("0") = 0$$
+assert $_test_result + 3 = 0x05 $$atoi("  5") = 5 (whitespace skipped)$$
+assert $_test_result + 4 = 0x00 $$atoi("abc") = 0$$
+assert $_test_result + 5 = 0xFF $$atol("65535") & 0xFF = 0xFF$$
+assert $_test_result + 6 = 0x19 $$atol("-999") & 0xFF = 0x19$$

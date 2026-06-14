@@ -1,0 +1,10 @@
+name: printstr — test string output via OSASCI
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+src_files:
+  - test_printstr.s
+ld_flags:
+  - -t
+  - bbc
+test_script: test_printstr.txt

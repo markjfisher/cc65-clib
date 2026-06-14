@@ -1,0 +1,13 @@
+name: wherex/wherey — test cursor position readback
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+
+src_files:
+  - test_wherexy.s
+
+ld_flags:
+  - -t
+  - bbc
+
+test_script: test_wherexy.txt

@@ -55,3 +55,21 @@ dkms.conf
 build/*
 
 __pycache__/
+
+# cc65-clib ROM / label / list artifacts
+*.rom
+*.lbl
+*.lst
+
+# BBC Micro disc images
+*.ssd
+
+# Python venv / caches
+.venv/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
+
+# Temporary / stray files
+$.*

@@ -1,0 +1,23 @@
+////////////////////////////////
+marker $$ chlinexy test $$
+////////////////////////////////
+
+memory load atari "${BINARY_PATH}"
+symbols load "${SYMBOLS_PATH}"
+memory write $mock_print_armed 0x(01)
+
+registers flush
+
+run $init_harness until (CP = $end_init_harness OR cycle_count > 5000)
+assert CP = $end_init_harness $$completed correctly$$
+
+; chlinexy(10,5,15) sends VDU31,x,y via _gotoxy then 15 underline chars via _chline
+assert #0xC800 = 0x1F     $$VDU 31 from gotoxy$$
+assert #0xC801 = 0x05     $$X=5$$
+assert #0xC802 = 0x0A     $$Y=10$$
+
+; 15 underline chars (0x5F) follow
+assert #0xC803 = 0x5F     $$first underline char$$
+assert #0xC811 = 0x5F     $$15th underline char$$
+
+assert $_test_result = 0x01     $$chlinexy completed$$

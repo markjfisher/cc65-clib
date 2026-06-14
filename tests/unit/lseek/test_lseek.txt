@@ -1,0 +1,26 @@
+////////////////////////////////
+marker $$ lseek test $$
+////////////////////////////////
+
+memory load atari "${BINARY_PATH}"
+symbols load "${SYMBOLS_PATH}"
+registers flush
+
+run $init_harness until (CP = $end_init_harness OR cycle_count > 5000)
+assert CP = $end_init_harness $$completed correctly$$
+
+; Test 1: lseek(999, 0, SEEK_SET) — invalid fd >= FD_MAX (16)
+assert $_test_result = 0xFF     $$lseek(999) result byte 0 = 0xFF$$
+assert $_test_result + 1 = 0xFF     $$result byte 1$$
+assert $_test_result + 2 = 0xFF     $$result byte 2$$
+assert $_test_result + 3 = 0xFF     $$result byte 3$$
+assert $_test_result + 4 = 0x10     $$errno = EBADF (16)$$
+
+; Test 2: lseek(0, 0, SEEK_SET) — CON fd
+assert $_test_result + 6 = 0xFF     $$lseek(0, CON) result byte 0 = 0xFF$$
+assert $_test_result + 7 = 0xFF     $$result byte 1$$
+assert $_test_result + 8 = 0xFF     $$result byte 2$$
+assert $_test_result + 9 = 0xFF     $$result byte 3$$
+assert $_test_result + 10 = 0x0E     $$errno = ESPIPE (14)$$
+
+assert $_test_result + 12 = 0x01     $$lseek test completed$$

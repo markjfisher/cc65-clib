@@ -1,0 +1,25 @@
+////////////////////////////////
+marker $$ cvlinexy test $$
+////////////////////////////////
+
+memory load atari "${BINARY_PATH}"
+symbols load "${SYMBOLS_PATH}"
+memory write $mock_print_armed 0x(01)
+
+registers flush
+
+run $init_harness until (CP = $end_init_harness OR cycle_count > 10000)
+assert CP = $end_init_harness $$completed correctly$$
+
+; cvlinexy(10,5,4) sends VDU31,x,y via _gotoxy then 4 vertical bars via _cvline
+assert #0xC800 = 0x1F     $$VDU 31 from gotoxy$$
+assert #0xC801 = 0x05     $$X=5$$
+assert #0xC802 = 0x0A     $$Y=10$$
+
+; 4 vertical bar sequences: | (0x7C), backspace (8), LF (10)
+assert #0xC803 = 0x7C     $$first vertical bar$$
+assert #0xC806 = 0x7C     $$second vertical bar$$
+assert #0xC809 = 0x7C     $$third vertical bar$$
+assert #0xC80C = 0x7C     $$fourth vertical bar$$
+
+assert $_test_result = 0x01     $$cvlinexy completed$$

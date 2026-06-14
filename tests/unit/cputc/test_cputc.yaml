@@ -1,0 +1,13 @@
+name: cputc — test character output
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+
+src_files:
+  - test_cputc.s
+
+ld_flags:
+  - -t
+  - bbc
+
+test_script: test_cputc.txt

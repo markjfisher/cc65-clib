@@ -1,0 +1,10 @@
+name: cvlinexy — test vertical line at position
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+src_files:
+  - test_cvlinexy.s
+ld_flags:
+  - -t
+  - bbc
+test_script: test_cvlinexy.txt

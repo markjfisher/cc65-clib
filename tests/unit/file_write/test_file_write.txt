@@ -1,0 +1,25 @@
+////////////////////////////////
+marker $$ file write test $$
+////////////////////////////////
+
+memory load atari "${BINARY_PATH}"
+symbols load "${SYMBOLS_PATH}"
+
+; File mock: start empty (len 0), handle $11. Open-for-write truncates anyway.
+memory write #0x0A00 0x(00)
+memory write #0x0A03 0x(11)
+
+registers flush
+
+run $init_harness until (CP = $end_init_harness OR cycle_count > 500000)
+assert CP = $end_init_harness $$completed correctly$$
+
+assert $_test_result = 0x01      $$open() succeeded$$
+assert $_test_result + 1 = 0x03  $$write() returned 3$$
+assert $_test_result + 2 = 0x01  $$completed$$
+
+; The mock buffer must now hold "ABC" with length 3.
+assert #0x0A00 = 0x03  $$file length = 3$$
+assert #0x0900 = 0x41  $$byte 0 = 'A'$$
+assert #0x0901 = 0x42  $$byte 1 = 'B'$$
+assert #0x0902 = 0x43  $$byte 2 = 'C'$$

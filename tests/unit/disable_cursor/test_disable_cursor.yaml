@@ -1,0 +1,13 @@
+name: disable_cursor_edit — test cursor editing disable/restore
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+
+src_files:
+  - test_disable_cursor.s
+
+ld_flags:
+  - -t
+  - bbc
+
+test_script: test_disable_cursor.txt

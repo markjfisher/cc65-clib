@@ -1,0 +1,10 @@
+name: break_handler_debug — test debug mode BRK handler
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+src_files:
+  - test_break_handler_debug.s
+ld_flags:
+  - -t
+  - bbc
+test_script: test_break_handler_debug.txt

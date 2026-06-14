@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "discTitle": "ctest",
+  "discSize": 800,
+  "bootOption": "none", 
+  "cycleNumber": 0,
+  "files": [
+    {
+      "fileName": "TEST",
+      "directory": "$",
+      "locked": false,
+      "loadAddress": "&001900",
+      "executionAddress": "&001900", 
+      "contentPath": "/home/markf/dev/bbc/test-cc65-clib/build/test-serial/test",
+      "type": "other"
+    }
+  ]
+}

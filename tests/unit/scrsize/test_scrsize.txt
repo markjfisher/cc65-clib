@@ -1,0 +1,21 @@
+////////////////////////////////
+marker $$ scrsize test $$
+////////////////////////////////
+
+memory load atari "${BINARY_PATH}"
+symbols load "${SYMBOLS_PATH}"
+
+; Populate the VDU text-window workspace (VDU_WKSP = $0300) to emulate a
+; 40-column x 25-row screen:
+;   BL = bottom-left (x=0,  y=24)   at $0308/$0309
+;   TR = top-right   (x=39, y=0)    at $030A/$030B
+memory write #0x0308 0x(00,18,27,00)
+
+registers flush
+
+run $init_harness until (CP = $end_init_harness OR cycle_count > 2000)
+assert CP = $end_init_harness $$completed correctly$$
+
+assert $_test_result = 0x28      $$screensize columns = 40$$
+assert $_test_result + 1 = 0x19  $$screensize rows = 25$$
+assert $_test_result + 2 = 0x01  $$completed$$

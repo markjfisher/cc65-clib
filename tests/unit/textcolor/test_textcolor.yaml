@@ -1,0 +1,13 @@
+name: textcolor/bgcolor/bordercolor — test colour functions
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+
+src_files:
+  - test_textcolor.s
+
+ld_flags:
+  - -t
+  - bbc
+
+test_script: test_textcolor.txt

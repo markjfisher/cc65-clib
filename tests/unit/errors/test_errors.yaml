@@ -1,0 +1,10 @@
+name: errors — test error number setting
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+src_files:
+  - test_errors.s
+ld_flags:
+  - -t
+  - bbc
+test_script: test_errors.txt

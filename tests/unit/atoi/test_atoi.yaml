@@ -1,0 +1,13 @@
+name: atoi — test string to integer conversion
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+
+src_files:
+  - test_atoi.s
+
+ld_flags:
+  - -t
+  - bbc
+
+test_script: test_atoi.txt

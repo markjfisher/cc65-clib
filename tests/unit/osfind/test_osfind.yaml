@@ -1,0 +1,10 @@
+name: osfind — test OSFIND wrapper
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+src_files:
+  - test_osfind.s
+ld_flags:
+  - -t
+  - bbc
+test_script: test_osfind.txt

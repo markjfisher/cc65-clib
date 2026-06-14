@@ -1,0 +1,23 @@
+////////////////////////////////
+marker $$ fdtable test $$
+////////////////////////////////
+
+memory load atari "${BINARY_PATH}"
+symbols load "${SYMBOLS_PATH}"
+registers flush
+
+run $init_harness until (CP = $end_init_harness OR cycle_count > 5000)
+assert CP = $end_init_harness $$completed correctly$$
+
+; __fd_getflags(0) -> flags=FD_FLAG_READ|FD_FLAG_CON = 0x11
+assert $_test_result = 0x11     $$fd_getflags(0) = READ|CON (0x11)$$
+; __fd_getflags(99) -> >= FD_MAX(16) -> ebadf -> returns 0xFF
+assert $_test_result + 1 = 0xFF     $$fd_getflags(99) = 0xFF (invalid fd)$$
+; __fd_getflags(3) -> free slot (flags=0) -> beq x1 -> ebadf -> 0xFF
+assert $_test_result + 2 = 0xFF     $$fd_getflags(3) = 0xFF (free slot)$$
+; __fd_getflags(1) -> FD_FLAG_WRITE|FD_FLAG_CON = 0x12
+assert $_test_result + 4 = 0x12     $$fd_getflags(1) = WRITE|CON (0x12)$$
+; __fd_getflags(2) -> FD_FLAG_WRITE|FD_FLAG_CON = 0x12
+assert $_test_result + 5 = 0x12     $$fd_getflags(2) = WRITE|CON (0x12)$$
+
+assert $_test_result + 6 = 0x01     $$fdtable test completed$$

@@ -1,0 +1,13 @@
+name: strcmp — test string comparison
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+
+src_files:
+  - test_strcmp.s
+
+ld_flags:
+  - -t
+  - bbc
+
+test_script: test_strcmp.txt

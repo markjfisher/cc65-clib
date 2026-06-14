@@ -1,0 +1,10 @@
+name: chlinexy — test horizontal line at position
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+src_files:
+  - test_chlinexy.s
+ld_flags:
+  - -t
+  - bbc
+test_script: test_chlinexy.txt

@@ -1,0 +1,16 @@
+////////////////////////////////
+marker $$ kbhit test $$
+////////////////////////////////
+
+memory load atari "${BINARY_PATH}"
+symbols load "${SYMBOLS_PATH}"
+registers flush
+
+run $init_harness until (CP = $end_init_harness OR cycle_count > 5000)
+assert CP = $end_init_harness $$completed correctly$$
+
+; _kbhit calls OSBYTE #$80 (buffer op) with X=$FF
+; OSBYTE stub: $80 only handles X=$FE, so with X=$FF it returns X=$FF
+; _kbhit then checks TXA bne -> returns 1
+assert $_test_result = 0x01     $$kbhit returns 1 (no keyboard buffer data in harness)$$
+assert $_test_result + 1 = 0x01     $$kbhit completed$$

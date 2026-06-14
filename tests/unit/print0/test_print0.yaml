@@ -1,0 +1,13 @@
+name: print0 — test null-terminated string output
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+
+src_files:
+  - test_print0.s
+
+ld_flags:
+  - -t
+  - bbc
+
+test_script: test_print0.txt

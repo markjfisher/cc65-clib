@@ -1,0 +1,13 @@
+name: cclear — test clear N characters from cursor
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+
+src_files:
+  - test_cclear.s
+
+ld_flags:
+  - -t
+  - bbc
+
+test_script: test_cclear.txt

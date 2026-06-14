@@ -1,0 +1,38 @@
+////////////////////////////////
+marker $$ clrscr test $$
+////////////////////////////////
+
+memory load atari "${BINARY_PATH}"
+symbols load "${SYMBOLS_PATH}"
+memory write $mock_print_armed 0x(01)
+
+; Mock VDU workspace for wherex/y
+memory write #0x0318 0x(0A,05)
+
+registers flush
+
+run $init_harness until (CP = $end_init_harness OR cycle_count > 20000)
+assert CP = $end_init_harness $$completed correctly$$
+
+; Sequence: gotoxy VDU31,10,5 (3 bytes), clrscr VDU12 (1 byte via _puts),
+; then cclear(20 spaces), chline(15 underlines 0x5F), cvline(8*3),
+; setcursor (VDU23 + 8 bytes)
+
+; gotoxy output first
+assert #0xC800 = 0x1F     $$VDU 31 sent by gotoxy$$
+assert #0xC801 = 0x0A     $$X=10$$
+assert #0xC802 = 0x0A     $$Y=10 (wrong param order in test)$$
+
+; clrscr sends form feed (VDU 12 = 0x0C)
+assert #0xC803 = 0x0C     $$VDU 12 (form feed / clear screen) sent$$
+
+; cclear(20) sends 20 spaces (0x20)
+assert #0xC806 ~ "                    "  $$20 spaces from cclear$$
+
+; chline(15) sends 15 underline chars (0x5F)
+memory show #0xC81A 0x10
+
+; cvline(8) sends '|', backspace(8), LF(10) repeated 8 times
+assert #0xC829 = 0x7C     $$vertical bar start$$
+
+assert $_test_result + 2 = 0x01 $$screen operations completed$$

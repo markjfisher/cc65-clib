@@ -1,0 +1,10 @@
+name: close_file — test file close via OSFIND
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+src_files:
+  - test_close_file.s
+ld_flags:
+  - -t
+  - bbc
+test_script: test_close_file.txt

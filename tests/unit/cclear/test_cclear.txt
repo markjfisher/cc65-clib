@@ -1,0 +1,17 @@
+////////////////////////////////
+marker $$ cclear test $$
+////////////////////////////////
+
+memory load atari "${BINARY_PATH}"
+symbols load "${SYMBOLS_PATH}"
+memory write $mock_print_armed 0x(01)
+
+registers flush
+
+run $init_harness until (CP = $end_init_harness OR cycle_count > 2000)
+assert CP = $end_init_harness $$completed correctly$$
+
+; cclear(20) sends 20 space characters (0x20) via OSWRCH
+assert #0xC800 ~ "                    "  $$20 spaces output$$
+
+assert $_test_result = 0x01     $$cclear completed$$

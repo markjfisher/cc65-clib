@@ -1,0 +1,13 @@
+name: strcat — test string concatenation
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+
+src_files:
+  - test_strcat.s
+
+ld_flags:
+  - -t
+  - bbc
+
+test_script: test_strcat.txt
