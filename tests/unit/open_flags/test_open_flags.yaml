@@ -1,0 +1,10 @@
+name: open - create/trunc/append/excl flags
+
+configs:
+  - ${HARNESS_DIR}/harness.yaml
+src_files:
+  - test_open_flags.c
+ld_flags:
+  - -t
+  - bbc
+test_script: test_open_flags.txt

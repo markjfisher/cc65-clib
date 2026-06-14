@@ -22,6 +22,7 @@
 ; the osfind.s wrapper must honour — the regression this mock guards).
 
         .export h_osfind_entry
+        .export h_osfile_entry
         .export h_osbget_entry
         .export h_osbput_entry
         .export h_osargs_entry
@@ -35,11 +36,23 @@ FILE_LEN   = $0A00
 FILE_PTR   = $0A01
 FILE_OPEN  = $0A02
 FILE_HVAR  = $0A03
+FILE_CTRL  = $0A04          ; bit 0: FILE_EXISTS explicitly set
+FILE_EXISTS = $0A05
 
-fm_tmp     = $0A04          ; scratch (not in cc65 / MOS ZP)
+fm_tmp     = $0A08          ; scratch (not in cc65 / MOS ZP)
 LAST_OPEN_MODE = $0A10
 LAST_OPEN_PTR  = $0A11
 LAST_OPEN_NAME = $0A20
+
+file_exists_check:
+        lda     FILE_CTRL
+        and     #$01
+        beq     @infer
+        lda     FILE_EXISTS
+        rts
+@infer:
+        lda     FILE_HVAR
+        rts
 
 ; ---------------------------------------------------------------------------
 ; OSFIND — A selects the operation; X/Y point at a CR-terminated name (open).
@@ -74,6 +87,8 @@ h_osfind_entry:
         cmp     #$C0
         beq     @update
         ; default: open for input ($40)
+        jsr     file_exists_check
+        beq     @done
         lda     FILE_HVAR
         beq     @done           ; handle 0 => "not found", return A=0
         lda     #$00
@@ -86,6 +101,11 @@ h_osfind_entry:
 @output:
         lda     FILE_HVAR
         beq     @done
+        lda     #$01
+        sta     FILE_EXISTS
+        lda     FILE_CTRL
+        ora     #$01
+        sta     FILE_CTRL
         lda     #$00
         sta     FILE_PTR
         sta     FILE_LEN        ; truncate on open-for-write
@@ -95,6 +115,8 @@ h_osfind_entry:
         rts
 
 @update:
+        jsr     file_exists_check
+        beq     @done
         lda     FILE_HVAR
         beq     @done
         lda     #$00
@@ -109,6 +131,37 @@ h_osfind_entry:
         lda     #$00
         sta     FILE_OPEN
 @done:
+        rts
+
+; ---------------------------------------------------------------------------
+; OSFILE — only implements A=5 (read info) for open() flag handling.
+; A=0 creates/truncates an empty file. A=5 returns A=1 if the mock file exists,
+; A=0 if not found.
+; ---------------------------------------------------------------------------
+h_osfile_entry:
+        cmp     #$00
+        beq     @save
+        cmp     #$05
+        bne     @not_found
+        jsr     file_exists_check
+        beq     @not_found
+        lda     #$01
+        rts
+@save:
+        lda     FILE_HVAR
+        beq     @not_found
+        lda     #$01
+        sta     FILE_EXISTS
+        lda     FILE_CTRL
+        ora     #$01
+        sta     FILE_CTRL
+        lda     #$00
+        sta     FILE_LEN
+        sta     FILE_PTR
+        lda     #$01
+        rts
+@not_found:
+        lda     #$00
         rts
 
 ; ---------------------------------------------------------------------------

@@ -38,6 +38,9 @@ _test_func:
   jsr pushax
   lda #O_RDONLY
   ldx #0
+  jsr pushax
+  lda #0
+  ldx #0
   jsr _open
   sta _fd
   cmp #$FF

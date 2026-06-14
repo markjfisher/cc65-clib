@@ -1,0 +1,35 @@
+////////////////////////////////
+marker $$ open flags test $$
+////////////////////////////////
+
+memory load atari "${BINARY_PATH}"
+symbols load "${SYMBOLS_PATH}"
+registers flush
+
+run $init_harness until (CP = $end_init_harness OR cycle_count > 120000)
+assert CP = $end_init_harness $$completed correctly$$
+
+assert $_test_result = 0x01      $$open without O_CREAT fails on missing file$$
+assert $_test_result + 1 = 0x01  $$errno = ENOENT$$
+assert $_test_result + 4 = 0x01  $$mock file now exists$$
+assert $_test_result + 5 = 0x00  $$created file truncated to length 0$$
+assert $_test_result + 6 = 0x80  $$new O_CREAT write opens finish in output mode$$
+assert $_test_result + 2 = 0x03  $$O_CREAT created file for write and returned fd=3$$
+assert $_test_result + 3 = 0x01  $$errno remained ENOENT from prior failure$$
+assert $_test_result + 7 = 0x01  $$O_APPEND open succeeded$$
+assert $_test_result + 8 = 0x04  $$append extended file length$$
+assert $_test_result + 9 = 0x41  $$byte 0 preserved as 'A'$$
+assert $_test_result + 10 = 0x42 $$byte 1 preserved as 'B'$$
+assert $_test_result + 11 = 0x43 $$appended byte 2 = 'C'$$
+assert $_test_result + 12 = 0x44 $$appended byte 3 = 'D'$$
+assert $_test_result + 14 = 0x00 $$truncate reduced file length to 0$$
+assert $_test_result + 13 = 0x01 $$O_RDWR|O_TRUNC open succeeded$$
+assert $_test_result + 15 = 0x80 $$truncate path finishes in output mode$$
+assert $_test_result + 16 = 0x01 $$O_CREAT|O_EXCL failed on existing file$$
+assert $_test_result + 17 = 0x09 $$errno = EEXIST$$
+assert $_test_result + 18 = 0x01 $$O_RDWR|O_CREAT created and reopened file$$
+assert $_test_result + 19 = 0x01 $$O_RDWR|O_CREAT created the file$$
+assert $_test_result + 20 = 0x80 $$O_RDWR|O_CREAT final open uses output mode$$
+assert $_test_result + 21 = 0x01 $$O_RDONLY|O_TRUNC rejected$$
+assert $_test_result + 22 = 0x07 $$errno = EINVAL$$
+assert $_test_result + 23 = 0x01 $$completed$$

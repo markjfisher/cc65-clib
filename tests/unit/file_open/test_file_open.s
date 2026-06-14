@@ -1,11 +1,15 @@
 .export _test_func
 .export _test_result
+.export _main
 
 .import _open
 .import _close
 .import pushax
 
 .segment "CODE"
+
+_main:
+  rts
 
 _test_result:
 .res 3
@@ -18,6 +22,9 @@ _invalid_name:
 _test_func:
   lda #<_invalid_name
   ldx #>_invalid_name
+  jsr pushax
+  lda #0
+  ldx #0
   jsr pushax
   lda #0
   ldx #0

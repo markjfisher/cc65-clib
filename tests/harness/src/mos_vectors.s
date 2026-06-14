@@ -10,6 +10,7 @@
 .import h_unknown_entry
 .import h_osrdch_entry
 .import h_osfind_entry
+.import h_osfile_entry
 .import h_osbget_entry
 .import h_osbput_entry
 .import h_osargs_entry
@@ -27,7 +28,7 @@ osgbpb_vector:  jmp h_unknown_entry
 osbput_vector:  jmp h_osbput_entry
 osbget_vector:  jmp h_osbget_entry
 osargs_vector:  jmp h_osargs_entry
-osfile_vector:  jmp h_unknown_entry
+osfile_vector:  jmp h_osfile_entry
 osrdch_vector:  jmp h_osrdch_entry
 osasci_vector:  cmp #$0d
                 bne oswrch_vector
