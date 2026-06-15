@@ -164,6 +164,16 @@ class MapParser:
         """Generate VICE symbol files split by address range."""
         clib_symbols = []  # Address range 8000-C000 
         mos_symbols = []   # All other symbols
+        vectored = read_vectored_symbols()
+
+        def add_symbol(name: str, address: str) -> None:
+            """Append one VICE symbol line to the appropriate output file."""
+            addr_int = int(address, 16)
+            vice_line = f"al {address} .{name}\n"
+            if 0x8000 <= addr_int < 0xC000:
+                clib_symbols.append(vice_line)
+            else:
+                mos_symbols.append(vice_line)
         
         for symbol_name in sorted(self.symbols.keys()):
             symbol = self.symbols[symbol_name]
@@ -171,18 +181,16 @@ class MapParser:
             # Skip symbols starting with '__' (internal symbols)
             if symbol.name.startswith('__'):
                 continue
-            
-            # Convert address to integer for comparison
-            addr_int = int(symbol.address, 16)
-            
-            # Format as VICE symbol line: al 008000 .name
-            vice_line = f"al {symbol.address} .{symbol.name}\n"
-            
-            # Split by address range
-            if 0x8000 <= addr_int < 0xC000:
-                clib_symbols.append(vice_line)
-            else:
-                mos_symbols.append(vice_line)
+
+            # For vectored entry points, expose both the stable ABI address and the
+            # relocatable implementation body so emulator debugging can follow the
+            # jump-table call into the real routine.
+            if symbol.name in vectored:
+                add_symbol(symbol.name, f"{vectored[symbol.name]:06X}")
+                add_symbol(f"_i{symbol.name}", symbol.address)
+                continue
+
+            add_symbol(symbol.name, symbol.address)
         
         # Write clib.lbl file (8000-C000 range)
         try:

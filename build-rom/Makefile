@@ -13,7 +13,10 @@
 # Paths are relative to this Makefile's directory (build-rom/).
 # From build-rom/: ../../cc65 = project-sibling cc65 checkout.
 CC65_ROOT ?= ../../cc65
-ROM_PATH ?= roms
+# Keep exported ROM/debug artifacts in the repository-level roms/ directory.
+# Several scripts and docs consume ../roms, so writing them inside build-rom/
+# would leave a second stale copy behind.
+ROM_PATH ?= ../roms
 BUILD_DIR ?= build
 TARGET_ROM_COPY ?=
 

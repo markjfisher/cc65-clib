@@ -77,10 +77,14 @@ This runs the full pipeline:
 | File | Description |
 |------|-------------|
 | `build/clib.rom` | **16 KB sideways ROM image** — the primary deliverable |
-| `build/clib.lib` | Companion static library for application linking |
+| `build/clib.lib` | Companion static library snapshot of the non-ROM objects plus generated stubs |
 | `build/clib.map` | Linker map |
-| `build/clib.lbl` | VICE labels for ROM addresses (`$8000-$BFFF`) |
+| `build/clib.lbl` | VICE labels for ROM addresses (`$8000-$BFFF`), including jump-table entry symbols and `_i...` implementation aliases for vectored routines |
 | `build/clib-mos.lbl` | VICE labels for MOS symbols outside the ROM window |
+
+The repository-level `roms/` directory is the exported debugger/emulator bundle:
+the latest `clib.rom`, matching `clib.lbl`, `clib-mos.lbl`, and `clib.lib` are
+copied there by `make -C build-rom all`. It is not an independent build output.
 
 ### Partial builds
 
@@ -124,14 +128,19 @@ This project is loosely coupled with the cc65 fork at
 | `build/out/clib_stubs.s` | `libsrc/bbc-clib/clib_stubs.s` | Stubs mapping ROM functions to their jump-table slot addresses |
 | `build/out/inc_objs.mk` | `libsrc/bbc-clib/inc_objs.mk` | Makefile fragment listing objects cc65 must build locally (everything not in ROM) |
 
+The cc65 tree does not consume `build/clib.lib` directly. Instead, the cc65
+`bbc-clib` target picks up the generated `clib_stubs.s` and `inc_objs.mk`, then
+rebuilds its own `bbc-clib.lib` from the filtered object list.
+
 The copy is non-fatal — if the cc65 checkout is missing the build still
 completes, but the artifacts won't be picked up by the cc65 `bbc-clib` target.
 
 ## Testing
 
 Tests are bundled in this project. The `build-rom/Makefile` orchestrates the
-end-to-end rebuild: cleans and rebuilds the ROM in `src/`, copies it to
-`roms/clib.rom`, then rebuilds the cc65 `bbc` and `bbc-clib` libraries.
+end-to-end rebuild: cleans and rebuilds the ROM in `src/`, copies the exported
+ROM/debug bundle to `roms/`, then rebuilds the cc65 `bbc` and `bbc-clib`
+libraries.
 
 ```bash
 # Full matrix: build + unit tests + integration tests
