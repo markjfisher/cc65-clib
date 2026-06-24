@@ -11,7 +11,7 @@
 # scripts/create_ssd.py (wraps dfstool).
 #
 # Environment:
-#   CC65_DIR   path to cc65 checkout (default: ../cc65)
+#   CC65_SRC   path to cc65 checkout (default: ../cc65)
 #   MODES      space-separated subset of "bbc bbc-clib" (default: both)
 #
 # Run from project root: bash tests/integration/scripts/build_test_discs.sh
@@ -21,7 +21,7 @@ set -euo pipefail
 SRC_DIR="tests/integration/discs"
 OUT_BASE="build/integration-testing/discs"
 STAGE_ROOT="$OUT_BASE/stage"
-CC65="${CC65_DIR:-../cc65}/bin/cl65"
+CC65="${CC65_SRC:-../cc65}/bin/cl65"
 CREATE_SSD="scripts/create_ssd.py"
 MODES="${MODES:-bbc bbc-clib}"
 

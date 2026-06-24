@@ -8,48 +8,16 @@ way), we write BASIC test programs and verify screen output.
 
 from __future__ import annotations
 
-import os
 import time
-from pathlib import Path
 
 import pytest
 
 from beebium import Beebium
 from beebium.screen import read_mode7_screen, screen_contains
 
+from beebium_test_env import rom_paths
 
-def _getenv_path(name, default=None):
-    v = os.environ.get(name) or default
-    return Path(v).resolve() if v else None
-
-
-def _rom(name):
-    d = _getenv_path("BEEBIUM_ROM_DIR")
-    if d:
-        p = d / name
-        if p.exists():
-            return p
-    return None
-
-
-BEEBIUM_SERVER = _getenv_path(
-    "BEEBIUM_SERVER",
-    "../beebium/build-release/src/server/beebium-model-b",
-)
-DFS_ROM = _rom("acorn-dfs_2_26.rom")
-MOS_ROM = _rom("acorn-mos_1_20.rom")
-BASIC_ROM = _rom("bbc-basic_2.rom")
-DISCS_DIR = Path(__file__).resolve().parent.parent.parent.parent / "build" / "integration-testing" / "discs"
-
-_REQUIRED = {
-    "beebium-server": BEEBIUM_SERVER,
-    "DFS ROM": DFS_ROM,
-    "MOS ROM": MOS_ROM,
-    "BASIC ROM": BASIC_ROM,
-}
-_MISSING = [n for n, p in _REQUIRED.items() if not p or not p.exists()]
-_SKIP_NEEDED = bool(_MISSING)
-_SKIP_REASON = ", ".join(_MISSING)
+BEEBIUM_SERVER, MOS_ROM, BASIC_ROM, DFS_ROM = rom_paths()
 
 
 def _launch(extra_args=None):
@@ -86,10 +54,6 @@ def _assert(bbc, text):
     )
 
 
-# ---- Tests via BASIC ---------------------------------------------------
-
-
-@pytest.mark.skipif(_SKIP_NEEDED, reason=_SKIP_REASON)
 def test_basic_print():
     """Basic PRINT "HELLO" works via OSWRCH (same path as cputc/cputs)"""
     with _launch() as bbc:
@@ -98,7 +62,6 @@ def test_basic_print():
         _assert(bbc, "HELLO")
 
 
-@pytest.mark.skipif(_SKIP_NEEDED, reason=_SKIP_REASON)
 def test_basic_print_var():
     """PRINT with variables and arithmetic"""
     with _launch() as bbc:
@@ -107,7 +70,6 @@ def test_basic_print_var():
         _assert(bbc, "420")
 
 
-@pytest.mark.skipif(_SKIP_NEEDED, reason=_SKIP_REASON)
 def test_basic_for_loop():
     """FOR loop with output"""
     with _launch() as bbc:
@@ -117,7 +79,6 @@ def test_basic_for_loop():
             _assert(bbc, str(i))
 
 
-@pytest.mark.skipif(_SKIP_NEEDED, reason=_SKIP_REASON)
 def test_basic_strings():
     """String operations"""
     with _launch() as bbc:
@@ -126,7 +87,6 @@ def test_basic_strings():
         _assert(bbc, "HELLO WORLD")
 
 
-@pytest.mark.skipif(_SKIP_NEEDED, reason=_SKIP_REASON)
 def test_basic_if_then():
     """IF/THEN branching"""
     with _launch() as bbc:
@@ -135,17 +95,14 @@ def test_basic_if_then():
         _assert(bbc, "BIG")
 
 
-@pytest.mark.skipif(_SKIP_NEEDED, reason=_SKIP_REASON)
 def test_basic_vdu():
     """VDU control codes via OSWRCH"""
     with _launch() as bbc:
         _boot(bbc)
-        # VDU 12 = clear screen, VDU 31,x,y = cursor home, then PRINT
         _type(bbc, 'VDU12:PRINT "AFTERCLS"\n')
         _assert(bbc, "AFTERCLS")
 
 
-@pytest.mark.skipif(_SKIP_NEEDED, reason=_SKIP_REASON)
 @pytest.mark.skip(reason="MODE 0 screen read not yet implemented (needs graphics screen reader)")
 def test_basic_mode5():
     """Test MODE 0 (80-col) output"""

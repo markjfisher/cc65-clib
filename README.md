@@ -2,6 +2,9 @@
 
 BBC Micro cc65 C library as a sideways ROM.
 
+**New developer?** See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for build tools,
+Beebium integration tests, and environment variables.
+
 This project determines which cc65 bbc library functions can reside in a 16 KB
 sideways ROM, builds that ROM image, and generates the stubs and metadata that
 the `bbc-clib` cc65 target uses to call into it.
@@ -137,6 +140,8 @@ completes, but the artifacts won't be picked up by the cc65 `bbc-clib` target.
 
 ## Testing
 
+See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for Beebium test setup (`BEEBIUM_HOME` only).
+
 Tests are bundled in this project. The `build-rom/Makefile` orchestrates the
 end-to-end rebuild: cleans and rebuilds the ROM in `src/`, copies the exported
 ROM/debug bundle to `roms/`, then rebuilds the cc65 `bbc` and `bbc-clib`
@@ -165,13 +170,10 @@ deterministic.
 ### Integration tests (beebium)
 
 Dual-mode (bbc + bbc-clib) tests that run cc65-compiled C programs inside a
-full BBC Micro emulation. These exercise real OS calls (OSWRCH, OSBYTE, OSFILE,
-OSFIND, OSGBPB) against the emulated Acorn DFS filing system and MODE 7 screen.
+full BBC Micro emulation. See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) —
+export `BEEBIUM_HOME`, then use `tests/integration/run_pytest.sh`.
 
-Prerequisites (auto-detected, skipped with a clear message if missing):
-- `beebium-model-b` server binary (from `../beebium`)
-- MOS, BASIC, and DFS ROMs
-- `dfstool` and `basictool` for building disc images
+Also required: `dfstool`, `basictool`, and a built `roms/clib.rom`.
 
 ## Keeping sources in sync with cc65
 
@@ -192,6 +194,7 @@ bash scripts/compare-cc65.sh --sync
 
 ## Further reading
 
+- [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) — developer onboarding and test setup
 - `PYTHON_SCRIPTS.md` — detailed documentation of the Python build scripts
 - `architecture-diagram.puml` — PlantUML diagram showing the build pipeline
 - `docs/BBC_CLIB_JUMPTABLE_DESIGN.md` — design of the jump

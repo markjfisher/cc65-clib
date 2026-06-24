@@ -27,7 +27,6 @@ Key facts that make this work (and that the earlier attempt got wrong):
 from __future__ import annotations
 
 import contextlib
-import os
 import time
 from pathlib import Path
 
@@ -36,49 +35,24 @@ import pytest
 from beebium import Beebium
 from beebium.screen import dump_screen, read_mode7_screen, screen_contains
 
+from beebium_test_env import missing_prerequisites, rom_paths
 
-def _getenv_path(name, default=None):
-    v = os.environ.get(name) or default
-    return Path(v).resolve() if v else None
-
-
-def _rom(name):
-    d = _getenv_path("BEEBIUM_ROM_DIR")
-    if d:
-        p = d / name
-        if p.exists():
-            return p
-    return None
-
-
-BEEBIUM_SERVER = _getenv_path(
-    "BEEBIUM_SERVER",
-    "../beebium/build-release/src/server/beebium-model-b",
-)
-DFS_ROM = _rom("acorn-dfs_2_26.rom")
-MOS_ROM = _rom("acorn-mos_1_20.rom")
-BASIC_ROM = _rom("bbc-basic_2.rom")
-_REPO_ROOT = Path(__file__).resolve().parents[3]
-DISCS_DIR = _REPO_ROOT / "build" / "integration-testing" / "discs"
-# The cc65 CLIB ROM (built by `make -C build-rom`), loaded for bbc-clib runs.
-CLIB_ROM = _REPO_ROOT / "roms" / "clib.rom"
-
-# The two cc65 targets we exercise. bbc links everything into RAM; bbc-clib
-# resolves stateless library functions to the CLIB sideways ROM.
-MODES = ("bbc", "bbc-clib")
-
-_REQUIRED = {
-    "beebium-server": BEEBIUM_SERVER,
-    "DFS ROM": DFS_ROM,
-    "MOS ROM": MOS_ROM,
-    "BASIC ROM": BASIC_ROM,
-}
-_MISSING = [n for n, p in _REQUIRED.items() if not p or not p.exists()]
+_MISSING = missing_prerequisites()
 SKIP_NEEDED = bool(_MISSING)
 SKIP_REASON = "missing: " + ", ".join(_MISSING) if _MISSING else ""
 
+if SKIP_NEEDED:
+    BEEBIUM_SERVER = MOS_ROM = BASIC_ROM = DFS_ROM = None  # type: ignore[assignment]
+else:
+    BEEBIUM_SERVER, MOS_ROM, BASIC_ROM, DFS_ROM = rom_paths()
+
+_REPO_ROOT = Path(__file__).resolve().parents[3]
+DISCS_DIR = _REPO_ROOT / "build" / "integration-testing" / "discs"
+CLIB_ROM = _REPO_ROOT / "roms" / "clib.rom"
+
+MODES = ("bbc", "bbc-clib")
+
 # Sideways slots. beebium Model B aliases 4 physical sockets across 16 logical
-# slots (socket = slot mod 4): DFS sits in socket 0 (slot 12) and BASIC in
 # socket 3 (slot 15), so the CLIB ROM uses socket 1 (slot 13).
 DFS_SLOT = 12
 CLIB_SLOT = 13
@@ -91,7 +65,7 @@ def disc_path(short_name: str, mode: str = "bbc") -> Path:
 
 def ensure_ready(short_name: str, mode: str = "bbc"):
     """pytest.skip if prerequisites for running ``short_name`` in ``mode`` are
-    missing (beebium/ROM deps, the built disc, or the CLIB ROM for bbc-clib)."""
+    missing (the built disc, or the CLIB ROM for bbc-clib)."""
     if SKIP_NEEDED:
         pytest.skip(SKIP_REASON)
     if not disc_path(short_name, mode).exists():
@@ -132,7 +106,7 @@ def launch(disc_short_name=None, mode: str = "bbc", with_clib_rom=None):
         basic_filepath=str(BASIC_ROM),
         extra_args=extra,
     ) as bbc:
-        with contextlib.suppress(Exception):
+        if bbc.system.wait_for_ready(timeout=5.0):
             bbc.system.set_speed_multiplier(0.0)
         yield bbc
 
@@ -205,7 +179,7 @@ def launch_shared(mode: str = "bbc"):
         extra_args=extra,
     ) as bbc:
         bbc.disc.set_spin_up_delay(False)
-        with contextlib.suppress(Exception):
+        if bbc.system.wait_for_ready(timeout=5.0):
             bbc.system.set_speed_multiplier(0.0)
         bbc.debugger.stop()
         yield bbc

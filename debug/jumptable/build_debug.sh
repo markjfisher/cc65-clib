@@ -19,7 +19,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 ROOT=$(cd ../.. && pwd)
 HERE=$(pwd)
-CL65="${CC65_DIR:-$ROOT/../cc65}/bin/cl65"
+CL65="${CC65_SRC:-$ROOT/../cc65}/bin/cl65"
 
 echo "1) Building the vectored CLIB ROM + cc65 bbc-clib lib..."
 make -C "$ROOT/build-rom" all >/dev/null
