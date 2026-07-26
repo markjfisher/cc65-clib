@@ -19,7 +19,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 ROOT=$(cd ../.. && pwd)
 HERE=$(pwd)
-CL65="${CC65_SRC:-$ROOT/../cc65}/bin/cl65"
+CL65="${CC65_SRC:-${CC65_ROOT:-$ROOT/../cc65}}/bin/cl65"
 
 echo "1) Building the vectored CLIB ROM + cc65 bbc-clib lib..."
 make -C "$ROOT/build-rom" all >/dev/null
@@ -40,5 +40,5 @@ for prog in vec_ok:VECOK vec_gotoxy:VECGOTO vec_fail:VECFAIL tscren:TSCREN; do
 done
 
 echo
-echo "Done. Vectored _strlen stub: $(grep -E '^_strlen[[:space:]]' "$ROOT/../cc65/libsrc/bbc-clib/clib_stubs.s")"
+echo "Done. Vectored _strlen stub: $(grep -E '^_strlen[[:space:]]' "${CC65_SRC:-${CC65_ROOT:-$ROOT/../cc65}}/libsrc/bbc-clib/clib_stubs.s")"
 echo "Jump table base \$8100; see README.md."

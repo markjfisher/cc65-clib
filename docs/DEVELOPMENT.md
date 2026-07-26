@@ -2,6 +2,18 @@
 
 ## Run tests
 
+From the FujiNet NIO workspace, the usual entry points are:
+
+```bash
+./scripts/build.sh cc65-clib            # ROM + cc65 bbc/bbc-clib libraries
+./scripts/build.sh cc65-clib-tests      # build plus soft65c02 unit tests
+./scripts/build.sh cc65-clib-full-tests # build plus unit and Beebium tests
+```
+
+The workspace runner exports `CC65_ROOT`, `CC65_SRC`, `CC65_HOME`, and
+`CLIB_ROOT` for this repository. It defaults `BEEBIUM_HOME` to
+`$HOME/dev/bbc/beebium` if the caller has not set it.
+
 Build the ROM, set one path, run the test gate:
 
 ```bash

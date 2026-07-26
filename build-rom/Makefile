@@ -12,7 +12,10 @@
 
 # Paths are relative to this Makefile's directory (build-rom/).
 # From build-rom/: ../../cc65 = project-sibling cc65 checkout.
-CC65_ROOT ?= ../../cc65
+CC65_ROOT ?= $(if $(CC65_SRC),$(CC65_SRC),../../cc65)
+CC65_ROOT := $(abspath $(CC65_ROOT))
+CC65_SRC ?= $(CC65_ROOT)
+CC65_SRC := $(abspath $(CC65_SRC))
 # Keep exported ROM/debug artifacts in the repository-level roms/ directory.
 # Several scripts and docs consume ../roms, so writing them inside build-rom/
 # would leave a second stale copy behind.
@@ -31,7 +34,7 @@ rebuild-clib: rebuild-clib-rom rebuild-cc65-lib
 
 rebuild-clib-rom:
 	@echo "Cleaning and rebuilding cc65-clib ROM..."
-	cd ../src && $(MAKE) clean copy-cc65-artifacts
+	cd ../src && $(MAKE) clean copy-cc65-artifacts CC65_SRC="$(CC65_SRC)"
 	@echo "ROM build complete - manifest files generated, and copied to cc65"
 	@echo "Copying ROM and VICE symbol files to project roms directory..."
 	mkdir -p $(ROM_PATH)

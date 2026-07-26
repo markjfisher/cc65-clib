@@ -51,9 +51,9 @@ repository has since undergone an extensive rewrite and is now detached.
 - **cc65 toolchain** (`ca65`, `cc65`, `ld65`, `ar65`, `od65`) — must be on
   `PATH`. Built from the cc65 fork at
   [github.com/markf256/cc65](https://github.com/markf256/cc65).
-- **cc65 source tree** at `../cc65` (or set `CC65_SRC`).  The build compiles
-  directly from the canonical cc65 `libsrc/{bbc,common,runtime}` trees; it
-  does not maintain a local copy.
+- **cc65 source tree** at `../cc65` (or set `CC65_ROOT`/`CC65_SRC`). The build
+  compiles directly from the canonical cc65 `libsrc/{bbc,common,runtime}`
+  trees; it does not maintain a local copy.
 - **Python 3.6+** (stdlib only; no pip packages required).
 
 ## Building
@@ -122,8 +122,8 @@ every `CODE` function in the current ROM map has a corresponding entry in
 
 ## Integration with the cc65 fork
 
-This project is loosely coupled with the cc65 fork at
-`/home/markf/dev/bbc/cc65/` (or wherever `CC65_SRC` points). After building,
+This project is loosely coupled with the cc65 fork at `../cc65` by default, or
+wherever `CC65_ROOT`/`CC65_SRC` points. After building,
 `make copy-cc65-artifacts` copies two files into the cc65 project:
 
 | File | Destination in cc65 | Purpose |
@@ -177,7 +177,8 @@ Also required: `dfstool`, `basictool`, and a built `roms/clib.rom`.
 
 ## Keeping sources in sync with cc65
 
-The ROM is built directly from the canonical cc65 fork at `../cc65`.  There is
+The ROM is built directly from the canonical cc65 fork at `../cc65`, or the
+path supplied by `CC65_ROOT`/`CC65_SRC`. There is
 no longer a duplicated copy of `libsrc/{bbc,common,runtime}` in this project.
 The only local sources live in `src/libsrc/bbc-clib/` (the overlay), which
 provides a flat ROM-aware break handler and a build-exclusion list.

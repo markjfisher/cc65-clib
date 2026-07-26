@@ -21,7 +21,7 @@ set -euo pipefail
 SRC_DIR="tests/integration/discs"
 OUT_BASE="build/integration-testing/discs"
 STAGE_ROOT="$OUT_BASE/stage"
-CC65="${CC65_SRC:-../cc65}/bin/cl65"
+CC65="${CC65_SRC:-${CC65_ROOT:-../cc65}}/bin/cl65"
 CREATE_SSD="scripts/create_ssd.py"
 MODES="${MODES:-bbc bbc-clib}"
 

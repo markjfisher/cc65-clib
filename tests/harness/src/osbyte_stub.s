@@ -89,6 +89,8 @@ osbyte_table_lo:
         .byte   .lobyte(osbyte_76 - 1)
         .elseif cmd = $7f
         .byte   .lobyte(osbyte_7f - 1)
+        .elseif cmd = $7e
+        .byte   .lobyte(osbyte_noop - 1)
         .elseif cmd = $83
         .byte   .lobyte(osbyte_83 - 1)
         .elseif cmd = $84
@@ -132,6 +134,8 @@ osbyte_table_hi:
         .byte   .hibyte(osbyte_76 - 1)
         .elseif cmd = $7f
         .byte   .hibyte(osbyte_7f - 1)
+        .elseif cmd = $7e
+        .byte   .hibyte(osbyte_noop - 1)
         .elseif cmd = $83
         .byte   .hibyte(osbyte_83 - 1)
         .elseif cmd = $84

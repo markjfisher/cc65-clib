@@ -7,8 +7,9 @@ BUILD := ../build
 WRK   := $(BUILD)/libwrk
 OUT   := $(BUILD)/out
 
-# CC65 source directory for manifest file copying (loose coupling)
-CC65_SRC ?= ../../cc65
+# CC65 source directory for canonical libsrc input and manifest copying.
+CC65_SRC ?= $(if $(CC65_ROOT),$(CC65_ROOT),../../cc65)
+CC65_SRC := $(abspath $(CC65_SRC))
 
 LD=ld65
 LDOPT=-v -vm

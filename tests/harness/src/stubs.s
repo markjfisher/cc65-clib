@@ -20,7 +20,9 @@ h_unknown_entry:
         brk
 
 ; OSRDCH — reads next byte from mock_rdch_buf.
-; Returns char in A with C=0 on success, C=1 on end-of-data (byte=0).
+; Returns char in A with C=0 on success, C=1 on Escape or end-of-data.
+; For Escape, MOS returns A=$1B with carry set; cgetc acknowledges it with
+; OSBYTE $7E and returns $1B to the caller.
 h_osrdch_entry:
         stx     $00             ; save X to temp
         ldx     mock_rdch_pos
@@ -29,7 +31,12 @@ h_osrdch_entry:
         inx
         stx     mock_rdch_pos
         ldx     $00             ; restore X
+        cmp     #$1B
+        beq     @escape
         clc
+        rts
+@escape:
+        sec
         rts
 @eof:
         ldx     $00             ; restore X

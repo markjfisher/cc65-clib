@@ -15,7 +15,7 @@ set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 cd "$ROOT"
 
-CC65_SRC="${CC65_SRC:-}"
+CC65_SRC="${CC65_SRC:-${CC65_ROOT:-}}"
 BUILD_DIR="build/integration-testing/discs"
 
 if [[ -z "${BEEBIUM_HOME:-}" ]]; then
