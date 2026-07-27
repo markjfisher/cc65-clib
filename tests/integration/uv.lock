@@ -139,10 +139,6 @@ dependencies = [
     { name = "grpcio" },
     { name = "protobuf" },
     { name = "pytest" },
-]
-
-[package.optional-dependencies]
-dev = [
     { name = "pytest-timeout" },
 ]
 
@@ -151,7 +147,7 @@ requires-dist = [
     { name = "grpcio", specifier = ">=1.60.0" },
     { name = "protobuf", specifier = ">=4.25.0" },
     { name = "pytest", specifier = ">=8.0" },
-    { name = "pytest-timeout", marker = "extra == 'dev'" },
+    { name = "pytest-timeout" },
 ]
 provides-extras = ["dev"]
 

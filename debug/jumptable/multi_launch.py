@@ -1,7 +1,7 @@
 import time, sys
-sys.path.insert(0, "/home/markf/dev/bbc/beebium/clients/python/src")
-from beebium import Beebium
-from beebium.screen import screen_contains
+sys.path.insert(0, "/home/markf/dev/bbc/beebium/clients/beebium-python-client/src")
+from beebium.client import Beebium
+from beebium.client.screen import screen_contains
 ROM="/home/markf/dev/bbc/beebium/roms"; SERVER="/home/markf/dev/bbc/beebium/build-release/src/server/beebium-model-b"
 CLIB="/home/markf/dev/bbc/cc65-clib/roms/clib.rom"
 def once(i):

@@ -13,7 +13,7 @@ Key facts that make this work (and that the earlier attempt got wrong):
   therefore links the test programs at $1900 (PAGE when DFS is present), and the
   disc catalogue load/exec addresses match.
 
-* beebium's beebium.screen helpers already correct for 6845 hardware scrolling
+* beebium's beebium.client.screen helpers already correct for 6845 hardware scrolling
   (they anchor reads at the CRTC screen-start), so read_mode7_screen /
   screen_contains return what is actually displayed.
 
@@ -32,8 +32,8 @@ from pathlib import Path
 
 import pytest
 
-from beebium import Beebium
-from beebium.screen import dump_screen, read_mode7_screen, screen_contains
+from beebium.client import Beebium
+from beebium.client.screen import dump_screen, read_mode7_screen, screen_contains
 
 from beebium_test_env import missing_prerequisites, rom_paths
 
@@ -223,4 +223,3 @@ def row_text(bbc, row: int) -> str:
     """The text of a single (scroll-corrected) MODE 7 row, right-stripped."""
     rows = read_mode7_screen(bbc)
     return rows[row].rstrip() if 0 <= row < len(rows) else ""
-

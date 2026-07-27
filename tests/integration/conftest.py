@@ -63,7 +63,7 @@ def pytest_collection_modifyitems(config, items):
                 item.add_marker(skip_clib)
 
 
-from beebium import Beebium
+from beebium.client import Beebium
 
 
 def _rom_dir() -> Path:

@@ -12,8 +12,8 @@ import time
 
 import pytest
 
-from beebium import Beebium
-from beebium.screen import read_mode7_screen, screen_contains
+from beebium.client import Beebium
+from beebium.client.screen import read_mode7_screen, screen_contains
 
 from beebium_test_env import rom_paths
 
